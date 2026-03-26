@@ -3,6 +3,19 @@ import { Check, Sparkles, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
+import { useRazorpayPayment } from "@/hooks/use-razorpay-payment";
+import { useState } from "react"; // Import useState
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 const plans = [
   {
@@ -53,11 +66,35 @@ const plans = [
 ];
 
 export default function PricingPage() {
+  const { openPaymentGateway } = useRazorpayPayment();
+  const [isAlertDialogOpen, setIsAlertDialogOpen] = useState(false);
+  const [selectedPlan, setSelectedPlan] = useState<{ name: string; amount: number } | null>(null);
+
+  const handleUpgradeClick = (planName: string, amount: number) => {
+    setSelectedPlan({ name: planName, amount: amount });
+    setIsAlertDialogOpen(true);
+  };
+
+  const confirmPayment = () => {
+    if (selectedPlan) {
+      openPaymentGateway({
+        amount: selectedPlan.amount * 100, // Convert to paisa
+        currency: "INR",
+        name: `VoyageAI ${selectedPlan.name}`,
+        description: `Upgrade to ${selectedPlan.name} Plan`,
+        handler: (response: any) => {
+          alert(`Payment successful! You are now a ${selectedPlan.name} user. Payment ID: ${response.razorpay_payment_id}`);
+          // Here you would typically verify the payment on your server and update user's plan
+        },
+      });
+    }
+    setIsAlertDialogOpen(false);
+  };
   return (
     <div className="min-h-screen flex flex-col">
       <Navbar />
 
-      <main className="pt-28 pb-20 flex-1">
+      <main className="pt-28 pb-20 flex-1 overflow-y-auto">
         <div className="container mx-auto px-4">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -118,6 +155,7 @@ export default function PricingPage() {
                       ? "opacity-60 pointer-events-none"
                       : "bg-hero-gradient text-primary-foreground hover:opacity-90"
                   }`}
+                  onClick={() => plan.cta === "Upgrade Now" && handleUpgradeClick(plan.name, parseFloat(plan.price.replace('$', '')))}
                 >
                   {plan.cta}
                 </Button>
@@ -126,6 +164,22 @@ export default function PricingPage() {
           </div>
         </div>
       </main>
+
+      <AlertDialog open={isAlertDialogOpen} onOpenChange={setIsAlertDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirm Your Upgrade</AlertDialogTitle>
+            <AlertDialogDescription>
+              You are about to upgrade to the <strong>{selectedPlan?.name}</strong> plan for <strong>₹{selectedPlan?.amount}</strong>.
+              Click "Pay Now" to proceed with the payment.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmPayment}>Pay Now</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       <Footer />
     </div>

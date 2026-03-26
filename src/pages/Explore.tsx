@@ -82,7 +82,7 @@ export default function ExplorePage() {
     <div className="min-h-screen flex flex-col">
       <Navbar />
 
-      <main className="pt-24 pb-16 flex-1">
+      <main className="pt-24 pb-16 flex-1 overflow-y-auto">
         <div className="container mx-auto px-4">
           {/* Header */}
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="mb-8">

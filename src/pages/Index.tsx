@@ -32,7 +32,7 @@ export default function HomePage() {
       <Navbar />
 
       {/* Hero */}
-      <section className="relative pt-32 pb-20 md:pt-44 md:pb-32 overflow-hidden">
+      <section className="relative pt-32 pb-20 md:pt-44 md:pb-32 overflow-hidden overflow-y-auto">
         <div className="absolute inset-0 bg-hero-gradient opacity-[0.04]" />
         <div className="absolute top-20 right-10 w-72 h-72 bg-primary/10 rounded-full blur-3xl animate-pulse-glow" />
         <div className="absolute bottom-10 left-10 w-56 h-56 bg-ocean/10 rounded-full blur-3xl animate-pulse-glow" />

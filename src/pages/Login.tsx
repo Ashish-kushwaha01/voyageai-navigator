@@ -11,7 +11,7 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
 
   return (
-    <div className="min-h-screen flex">
+    <div className="min-h-screen flex overflow-y-auto">
       {/* Left — form */}
       <div className="flex-1 flex items-center justify-center px-6 py-12">
         <motion.div

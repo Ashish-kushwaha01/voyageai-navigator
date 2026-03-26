@@ -1,117 +1,173 @@
 import { motion } from "framer-motion";
-import { User, MapPin, Clock, Star, CreditCard, BookmarkPlus, LogOut } from "lucide-react";
+import { User, MapPin, Clock, Star, CreditCard, BookmarkPlus, LogOut, Globe, Sparkles, Compass, History, Upload, Key, Settings, TrendingUp, TrendingDown, Timer } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
-
-const savedPlaces = [
-  { name: "Santorini, Greece", date: "Mar 12, 2026" },
-  { name: "Kyoto, Japan", date: "Mar 10, 2026" },
-  { name: "Bali, Indonesia", date: "Mar 8, 2026" },
-];
-
-const history = [
-  { name: "Machu Picchu", action: "AI Guide used", time: "2 hours ago" },
-  { name: "Swiss Alps", action: "Watched virtual tour", time: "Yesterday" },
-  { name: "Marrakech", action: "Explored via map", time: "3 days ago" },
-];
+import { Link } from "react-router-dom";
+import { useHistory } from "@/hooks/use-history";
+import { useBookmarks } from "@/hooks/use-bookmarks";
 
 export default function DashboardPage() {
+  const { history } = useHistory();
+  const { bookmarks } = useBookmarks();
   return (
     <div className="min-h-screen flex flex-col">
       <Navbar />
 
-      <main className="pt-24 pb-16 flex-1">
+      <main className="pt-24 pb-16 flex-1 overflow-y-auto">
         <div className="container mx-auto px-4">
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
             <h1 className="font-display text-3xl md:text-4xl font-bold mb-8">Dashboard</h1>
           </motion.div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {/* Profile card */}
+          {/* Stats Grid */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            {/* Stat Card 1: Destinations Explored */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.1 }}
-              className="bg-card rounded-xl shadow-elevated p-6"
+              className="bg-card rounded-xl shadow-elevated p-6 flex items-center gap-4"
             >
-              <div className="flex items-center gap-4 mb-6">
-                <div className="w-14 h-14 rounded-full bg-hero-gradient flex items-center justify-center">
-                  <User className="w-7 h-7 text-primary-foreground" />
-                </div>
-                <div>
-                  <h3 className="font-display font-semibold text-lg">Explorer</h3>
-                  <p className="text-sm text-muted-foreground">explorer@voyageai.com</p>
-                </div>
+              <div className="w-12 h-12 rounded-full bg-blue-500/20 text-blue-400 flex items-center justify-center">
+                <Globe className="w-6 h-6" />
               </div>
-
-              <div className="space-y-3">
-                <div className="flex items-center justify-between text-sm">
-                  <span className="text-muted-foreground">Plan</span>
-                  <Badge variant="secondary" className="bg-accent text-accent-foreground">Free</Badge>
-                </div>
-                <div className="flex items-center justify-between text-sm">
-                  <span className="text-muted-foreground">Places Saved</span>
-                  <span className="font-medium">{savedPlaces.length}</span>
-                </div>
-                <div className="flex items-center justify-between text-sm">
-                  <span className="text-muted-foreground">AI Guides Used</span>
-                  <span className="font-medium">5 / 10</span>
-                </div>
+              <div>
+                <div className="text-2xl font-bold">{history.length}</div>
+                <div className="text-sm text-muted-foreground">Destinations Explored</div>
               </div>
-
-              <div className="flex gap-2 mt-6">
-                <Button size="sm" className="flex-1 bg-hero-gradient text-primary-foreground gap-1 hover:opacity-90">
-                  <CreditCard className="w-4 h-4" /> Upgrade
-                </Button>
-                <Button size="sm" variant="outline" className="gap-1">
-                  <LogOut className="w-4 h-4" /> Sign Out
-                </Button>
-              </div>
+              <Badge variant="secondary" className="ml-auto bg-green-500/20 text-green-400">+12%</Badge>
             </motion.div>
 
-            {/* Saved places */}
+            {/* Stat Card 2: AI Guide Credits Remaining */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.2 }}
+              className="bg-card rounded-xl shadow-elevated p-6 flex items-center gap-4"
+            >
+              <div className="w-12 h-12 rounded-full bg-purple-500/20 text-purple-400 flex items-center justify-center">
+                <Sparkles className="w-6 h-6" />
+              </div>
+              <div>
+                <div className="text-2xl font-bold">3</div>
+                <div className="text-sm text-muted-foreground">AI Guide Credits Remaining</div>
+              </div>
+              <Badge variant="secondary" className="ml-auto bg-red-500/20 text-red-400">-0.5s</Badge>
+            </motion.div>
+
+            {/* Stat Card 3: Bookmarks */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.3 }}
+              className="bg-card rounded-xl shadow-elevated p-6 flex items-center gap-4"
+            >
+              <div className="w-12 h-12 rounded-full bg-yellow-500/20 text-yellow-400 flex items-center justify-center">
+                <BookmarkPlus className="w-6 h-6" />
+              </div>
+              <div>
+                <div className="text-2xl font-bold">{bookmarks.length}</div>
+                <div className="text-sm text-muted-foreground">Bookmarks</div>
+              </div>
+              <Badge variant="secondary" className="ml-auto bg-green-500/20 text-green-400">+8%</Badge>
+            </motion.div>
+
+            {/* Stat Card 4: Avg. Exploration Time */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.4 }}
+              className="bg-card rounded-xl shadow-elevated p-6 flex items-center gap-4"
+            >
+              <div className="w-12 h-12 rounded-full bg-green-500/20 text-green-400 flex items-center justify-center">
+                <Timer className="w-6 h-6" />
+              </div>
+              <div>
+                <div className="text-2xl font-bold">3.2s</div>
+                <div className="text-sm text-muted-foreground">Avg. Exploration Time</div>
+              </div>
+              <Badge variant="secondary" className="ml-auto bg-red-500/20 text-red-400">-0.5s</Badge>
+            </motion.div>
+          </div>
+
+          {/* Quick Actions */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.5 }}
+            className="mb-8"
+          >
+            <h2 className="font-display text-xl font-bold mb-4">Quick Actions</h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              <Link to="/explore">
+                <div className="bg-card rounded-xl shadow-elevated p-6 flex flex-col items-center text-center hover:shadow-glow transition-shadow">
+                  <Globe className="w-8 h-8 text-primary mb-3" />
+                  <h3 className="font-semibold text-lg">Explore Destinations</h3>
+                  <p className="text-sm text-muted-foreground">Discover new places with AI</p>
+                </div>
+              </Link>
+              <Link to="/history">
+                <div className="bg-card rounded-xl shadow-elevated p-6 flex flex-col items-center text-center hover:shadow-glow transition-shadow">
+                  <History className="w-8 h-8 text-ocean mb-3" />
+                  <h3 className="font-semibold text-lg">View History</h3>
+                  <p className="text-sm text-muted-foreground">Access your recently viewed places</p>
+                </div>
+              </Link>
+              <Link to="/bookmarks">
+                <div className="bg-card rounded-xl shadow-elevated p-6 flex flex-col items-center text-center hover:shadow-glow transition-shadow">
+                  <BookmarkPlus className="w-8 h-8 text-yellow-400 mb-3" />
+                  <h3 className="font-semibold text-lg">Manage Bookmarks</h3>
+                  <p className="text-sm text-muted-foreground">Organize your saved destinations</p>
+                </div>
+              </Link>
+            </div>
+          </motion.div>
+
+          {/* Recent Activity / Saved Places */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Recent Activity */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.6 }}
               className="bg-card rounded-xl shadow-elevated p-6"
             >
-              <h3 className="font-display font-semibold text-lg mb-4 flex items-center gap-2">
-                <BookmarkPlus className="w-5 h-5 text-primary" /> Saved Places
-              </h3>
-              <div className="space-y-3">
-                {savedPlaces.map((p) => (
-                  <div key={p.name} className="flex items-center justify-between py-2 border-b border-border last:border-0">
-                    <div className="flex items-center gap-2">
-                      <MapPin className="w-4 h-4 text-primary" />
-                      <span className="text-sm font-medium">{p.name}</span>
+              <h2 className="font-display text-xl font-bold mb-4">Recent Activity</h2>
+              <div className="space-y-4">
+                {history.map((place) => (
+                  <div key={place.id} className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center">
+                      <Clock className="w-4 h-4 text-muted-foreground" />
                     </div>
-                    <span className="text-xs text-muted-foreground">{p.date}</span>
+                    <div>
+                      <p className="text-sm font-medium">{place.name}</p>
+                      <p className="text-xs text-muted-foreground">Viewed</p>
+                    </div>
                   </div>
                 ))}
               </div>
             </motion.div>
 
-            {/* History */}
+            {/* Saved Places */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.3 }}
+              transition={{ delay: 0.7 }}
               className="bg-card rounded-xl shadow-elevated p-6"
             >
-              <h3 className="font-display font-semibold text-lg mb-4 flex items-center gap-2">
-                <Clock className="w-5 h-5 text-ocean" /> Recent Activity
-              </h3>
-              <div className="space-y-3">
-                {history.map((h) => (
-                  <div key={h.name + h.action} className="flex items-start justify-between py-2 border-b border-border last:border-0">
-                    <div>
-                      <span className="text-sm font-medium">{h.name}</span>
-                      <p className="text-xs text-muted-foreground">{h.action}</p>
+              <h2 className="font-display text-xl font-bold mb-4">Saved Places</h2>
+              <div className="space-y-4">
+                {bookmarks.map((place) => (
+                  <div key={place.id} className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center">
+                      <MapPin className="w-4 h-4 text-muted-foreground" />
                     </div>
-                    <span className="text-xs text-muted-foreground whitespace-nowrap">{h.time}</span>
+                    <div>
+                      <p className="text-sm font-medium">{place.name}</p>
+                      <p className="text-xs text-muted-foreground">Bookmarked</p>
+                    </div>
                   </div>
                 ))}
               </div>

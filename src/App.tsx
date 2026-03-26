@@ -9,7 +9,15 @@ import Dashboard from "./pages/Dashboard";
 import Pricing from "./pages/Pricing";
 import Login from "./pages/Login";
 import HistoryPage from "./pages/HistoryPage";
+import AboutPage from "./pages/About";
+import PrivacyPolicyPage from "./pages/PrivacyPolicy";
+import RefundAndCancellationsPage from "./pages/RefundAndCancellations";
+import ContactUsPage from "./pages/ContactUs";
+import TermsAndConditionsPage from "./pages/TermsAndConditions";
+import CookiesPage from "./pages/Cookies";
+import BookmarksPage from "./pages/BookmarksPage";
 import NotFound from "./pages/NotFound";
+import ScrollToTop from "./components/ScrollToTop";
 
 const queryClient = new QueryClient();
 
@@ -19,6 +27,7 @@ const App = () => (
       <Toaster />
       <Sonner />
       <BrowserRouter>
+        <ScrollToTop />
         <Routes>
           <Route path="/" element={<Index />} />
           <Route path="/explore" element={<Explore />} />
@@ -26,6 +35,13 @@ const App = () => (
           <Route path="/pricing" element={<Pricing />} />
           <Route path="/login" element={<Login />} />
           <Route path="/history" element={<HistoryPage />} />
+          <Route path="/about" element={<AboutPage />} />
+          <Route path="/privacy-policy" element={<PrivacyPolicyPage />} />
+          <Route path="/refund-cancellations" element={<RefundAndCancellationsPage />} />
+          <Route path="/contact-us" element={<ContactUsPage />} />
+          <Route path="/terms-conditions" element={<TermsAndConditionsPage />} />
+          <Route path="/cookies" element={<CookiesPage />} />
+          <Route path="/bookmarks" element={<BookmarksPage />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>

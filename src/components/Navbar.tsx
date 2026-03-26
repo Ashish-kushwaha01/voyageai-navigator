@@ -3,6 +3,17 @@ import { Link, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { Globe, Menu, X, User, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useRazorpayPayment } from "@/hooks/use-razorpay-payment";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 const navLinks = [
   { to: "/", label: "Home" },
@@ -15,6 +26,31 @@ const navLinks = [
 export default function Navbar() {
   const [open, setOpen] = useState(false);
   const location = useLocation();
+  const { openPaymentGateway } = useRazorpayPayment();
+  const [isAlertDialogOpen, setIsAlertDialogOpen] = useState(false);
+
+  const handlePremiumClick = () => {
+    setIsAlertDialogOpen(true);
+  };
+
+  const confirmPayment = () => {
+    openPaymentGateway({
+      amount: 50000, // Amount in paisa (e.g., 50000 paisa = 500 INR)
+      currency: "INR",
+      name: "VoyageAI Premium",
+      description: "Unlock premium features for VoyageAI",
+      handler: (response: any) => {
+        alert(`Payment successful! You are now a Premium user. Payment ID: ${response.razorpay_payment_id}`);
+        // Here you would typically verify the payment on your server
+      },
+      prefill: {
+        name: "VoyageAI User",
+        email: "user@example.com",
+        contact: "9999999999",
+      },
+    });
+    setIsAlertDialogOpen(false);
+  };
 
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 glass">
@@ -53,11 +89,9 @@ export default function Navbar() {
               <User className="w-4 h-4" /> Sign In
             </Button>
           </Link>
-          <Link to="/pricing">
-            <Button size="sm" className="bg-hero-gradient text-primary-foreground gap-2 hover:opacity-90">
+          <Button size="sm" className="bg-hero-gradient text-primary-foreground gap-2 hover:opacity-90" onClick={handlePremiumClick}>
               <Sparkles className="w-4 h-4" /> Get Premium
             </Button>
-          </Link>
         </div>
 
         {/* Mobile toggle */}
@@ -96,15 +130,29 @@ export default function Navbar() {
                   <User className="w-4 h-4" /> Sign In
                 </Button>
               </Link>
-              <Link to="/pricing" onClick={() => setOpen(false)}>
-                <Button className="w-full bg-hero-gradient text-primary-foreground gap-2">
+              <Button className="w-full bg-hero-gradient text-primary-foreground gap-2" onClick={() => { setOpen(false); handlePremiumClick(); }}>
                   <Sparkles className="w-4 h-4" /> Get Premium
                 </Button>
-              </Link>
             </div>
           </motion.div>
         )}
       </AnimatePresence>
+
+      <AlertDialog open={isAlertDialogOpen} onOpenChange={setIsAlertDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirm Premium Upgrade</AlertDialogTitle>
+            <AlertDialogDescription>
+              You are about to upgrade to the <strong>VoyageAI Premium</strong> plan for <strong>₹500</strong>.
+              Click "Pay Now" to proceed with the payment.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmPayment}>Pay Now</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </nav>
   );
 }
