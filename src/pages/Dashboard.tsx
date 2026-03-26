@@ -7,15 +7,16 @@ import Footer from "@/components/Footer";
 import { Link } from "react-router-dom";
 import { useHistory } from "@/hooks/use-history";
 import { useBookmarks } from "@/hooks/use-bookmarks";
+import Sidebar from "@/components/Sidebar";
 
 export default function DashboardPage() {
   const { history } = useHistory();
   const { bookmarks } = useBookmarks();
   return (
-    <div className="min-h-screen flex flex-col">
-      <Navbar />
-
-      <main className="pt-24 pb-16 flex-1 overflow-y-auto">
+    <div className="min-h-screen flex">
+      <Sidebar />
+      <div className="flex flex-col flex-1 lg:ml-64">
+        <main className="flex-1 pt-24 pb-16 overflow-y-auto">
         <div className="container mx-auto px-4">
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
             <h1 className="font-display text-3xl md:text-4xl font-bold mb-8">Dashboard</h1>
@@ -137,7 +138,7 @@ export default function DashboardPage() {
               <h2 className="font-display text-xl font-bold mb-4">Recent Activity</h2>
               <div className="space-y-4">
                 {history.map((place) => (
-                  <div key={place.id} className="flex items-center gap-3">
+                  <Link to={`/explore?place=${place.id}`} key={place.id} className="flex items-center gap-3 p-2 rounded-lg hover:bg-muted transition-colors cursor-pointer">
                     <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center">
                       <Clock className="w-4 h-4 text-muted-foreground" />
                     </div>
@@ -145,7 +146,7 @@ export default function DashboardPage() {
                       <p className="text-sm font-medium">{place.name}</p>
                       <p className="text-xs text-muted-foreground">Viewed</p>
                     </div>
-                  </div>
+                  </Link>
                 ))}
               </div>
             </motion.div>
@@ -160,7 +161,7 @@ export default function DashboardPage() {
               <h2 className="font-display text-xl font-bold mb-4">Saved Places</h2>
               <div className="space-y-4">
                 {bookmarks.map((place) => (
-                  <div key={place.id} className="flex items-center gap-3">
+                  <Link to={`/explore?place=${place.id}`} key={place.id} className="flex items-center gap-3 p-2 rounded-lg hover:bg-muted transition-colors cursor-pointer">
                     <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center">
                       <MapPin className="w-4 h-4 text-muted-foreground" />
                     </div>
@@ -168,7 +169,7 @@ export default function DashboardPage() {
                       <p className="text-sm font-medium">{place.name}</p>
                       <p className="text-xs text-muted-foreground">Bookmarked</p>
                     </div>
-                  </div>
+                  </Link>
                 ))}
               </div>
             </motion.div>
@@ -177,6 +178,7 @@ export default function DashboardPage() {
       </main>
 
       <Footer />
+      </div>
     </div>
   );
 }

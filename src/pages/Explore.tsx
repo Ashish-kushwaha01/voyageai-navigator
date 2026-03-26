@@ -62,7 +62,7 @@ export default function ExplorePage() {
         addPlaceToHistory(foundPlace); // Add to history
       }
     })();
-  }, [query, selectedPlaceId, navigate, addPlaceToHistory]);
+  }, [query, selectedPlaceId, navigate, addPlaceToHistory, history]);
 
   const handleSearch = () => {
     setQuery(searchInput);

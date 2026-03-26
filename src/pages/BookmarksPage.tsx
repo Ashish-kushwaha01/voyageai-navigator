@@ -29,7 +29,7 @@ export default function BookmarksPage() {
               {bookmarks.map((place) => (
                 <div key={place.id} className="bg-card rounded-xl shadow-elevated overflow-hidden flex flex-col">
                   <Link to={`/explore?place=${place.id}`} className="block">
-                    <img src={place.image} alt={place.name} className="w-full h-48 object-cover" />
+                    <img src={place.imageUrl} alt={place.name} className="w-full h-48 object-cover" />
                   </Link>
                   <div className="p-4 flex-1 flex flex-col">
                     <h2 className="font-semibold text-xl mb-2">{place.name}</h2>

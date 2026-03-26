@@ -38,5 +38,9 @@ export function useBookmarks() {
     });
   };
 
-  return { bookmarks, isBookmarked, toggleBookmark };
+  const removeBookmark = (placeId: string) => {
+    setBookmarks((prevBookmarks) => prevBookmarks.filter((item) => item.id !== placeId));
+  };
+
+  return { bookmarks, isBookmarked, toggleBookmark, removeBookmark };
 }

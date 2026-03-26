@@ -3,6 +3,7 @@ import { BrowserRouter, Route, Routes } from "react-router-dom";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { ThemeProvider } from "@/components/theme-provider";
 import Index from "./pages/Index";
 import Explore from "./pages/Explore";
 import Dashboard from "./pages/Dashboard";
@@ -16,6 +17,7 @@ import ContactUsPage from "./pages/ContactUs";
 import TermsAndConditionsPage from "./pages/TermsAndConditions";
 import CookiesPage from "./pages/Cookies";
 import BookmarksPage from "./pages/BookmarksPage";
+import SettingsPage from "./pages/SettingsPage";
 import NotFound from "./pages/NotFound";
 import ScrollToTop from "./components/ScrollToTop";
 
@@ -27,7 +29,8 @@ const App = () => (
       <Toaster />
       <Sonner />
       <BrowserRouter>
-        <ScrollToTop />
+        <ThemeProvider defaultTheme="dark" attribute="class">
+          <ScrollToTop />
         <Routes>
           <Route path="/" element={<Index />} />
           <Route path="/explore" element={<Explore />} />
@@ -42,8 +45,10 @@ const App = () => (
           <Route path="/terms-conditions" element={<TermsAndConditionsPage />} />
           <Route path="/cookies" element={<CookiesPage />} />
           <Route path="/bookmarks" element={<BookmarksPage />} />
+          <Route path="/settings" element={<SettingsPage />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
+        </ThemeProvider>
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>

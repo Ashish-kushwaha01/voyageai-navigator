@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { useRazorpayPayment } from "@/hooks/use-razorpay-payment";
+import { PaymentSuccessDialog } from "@/components/PaymentSuccessDialog";
 import { useState } from "react"; // Import useState
 import {
   AlertDialog,
@@ -68,6 +69,8 @@ const plans = [
 export default function PricingPage() {
   const { openPaymentGateway } = useRazorpayPayment();
   const [isAlertDialogOpen, setIsAlertDialogOpen] = useState(false);
+  const [isPaymentSuccessDialogOpen, setIsPaymentSuccessDialogOpen] = useState(false);
+  const [paymentId, setPaymentId] = useState("");
   const [selectedPlan, setSelectedPlan] = useState<{ name: string; amount: number } | null>(null);
 
   const handleUpgradeClick = (planName: string, amount: number) => {
@@ -82,9 +85,9 @@ export default function PricingPage() {
         currency: "INR",
         name: `VoyageAI ${selectedPlan.name}`,
         description: `Upgrade to ${selectedPlan.name} Plan`,
-        handler: (response: any) => {
-          alert(`Payment successful! You are now a ${selectedPlan.name} user. Payment ID: ${response.razorpay_payment_id}`);
-          // Here you would typically verify the payment on your server and update user's plan
+        handler: (response: { razorpay_payment_id: string }) => {
+          setPaymentId(response.razorpay_payment_id);
+          setIsPaymentSuccessDialogOpen(true);
         },
       });
     }
@@ -166,20 +169,51 @@ export default function PricingPage() {
       </main>
 
       <AlertDialog open={isAlertDialogOpen} onOpenChange={setIsAlertDialogOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Confirm Your Upgrade</AlertDialogTitle>
-            <AlertDialogDescription>
-              You are about to upgrade to the <strong>{selectedPlan?.name}</strong> plan for <strong>₹{selectedPlan?.amount}</strong>.
-              Click "Pay Now" to proceed with the payment.
+        <AlertDialogContent className="max-w-md p-6 bg-card rounded-lg shadow-lg">
+          <AlertDialogHeader className="flex flex-col items-center text-center">
+            <Sparkles className="w-10 h-10 text-primary mb-3" />
+            <AlertDialogTitle className="text-2xl font-bold text-foreground">Upgrade to Pro</AlertDialogTitle>
+            <AlertDialogDescription className="text-muted-foreground text-sm mt-2">
+              Unlock the full potential of VoyageAI with Pro features. ₹499/month - 10 AI credits for 1 month.
             </AlertDialogDescription>
           </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={confirmPayment}>Pay Now</AlertDialogAction>
+          <div className="space-y-3 my-4 text-sm text-foreground max-h-60 overflow-y-auto pr-2">
+            <div className="flex items-center gap-2">
+              <Check className="w-4 h-4 text-green-500" /> 10 AI credits for 1 month
+            </div>
+            <div className="flex items-center gap-2">
+              <Check className="w-4 h-4 text-green-500" /> Advanced AI Guide features
+            </div>
+            <div className="flex items-center gap-2">
+              <Check className="w-4 h-4 text-green-500" /> Unlimited trip planning & itineraries
+            </div>
+            <div className="flex items-center gap-2">
+              <Check className="w-4 h-4 text-green-500" /> Priority support
+            </div>
+            <div className="flex items-center gap-2">
+              <Check className="w-4 h-4 text-green-500" /> Exclusive destination insights
+            </div>
+            <div className="flex items-center gap-2">
+              <Check className="w-4 h-4 text-green-500" /> Offline access to saved places
+            </div>
+            <div className="flex items-center gap-2">
+              <Check className="w-4 h-4 text-green-500" /> Ad-free experience
+            </div>
+          </div>
+          <AlertDialogFooter className="flex flex-col-reverse sm:flex-col sm:space-x-0 sm:space-y-2 mt-4">
+            <AlertDialogAction onClick={confirmPayment} className="w-full bg-hero-gradient text-primary-foreground text-lg py-2 rounded-md hover:opacity-90 transition-opacity">
+              Start Pro Trial — ₹499
+            </AlertDialogAction>
+            <AlertDialogCancel className="w-full mt-2">Cancel</AlertDialogCancel>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <PaymentSuccessDialog
+        isOpen={isPaymentSuccessDialogOpen}
+        onClose={() => setIsPaymentSuccessDialogOpen(false)}
+        paymentId={paymentId}
+      />
 
       <Footer />
     </div>

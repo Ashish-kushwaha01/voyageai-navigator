@@ -126,26 +126,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Trending */}
-      <section className="py-20">
-        <div className="container mx-auto px-4">
-          <div className="flex items-end justify-between mb-10">
-            <div>
-              <h2 className="font-display text-3xl md:text-4xl font-bold">Trending Destinations</h2>
-              <p className="mt-2 text-muted-foreground">The most popular places this month</p>
-            </div>
-            <Link to="/explore" className="hidden md:inline-flex items-center gap-1 text-sm font-medium text-primary hover:underline">
-              View all <ArrowRight className="w-4 h-4" />
-            </Link>
-          </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {trendingPlaces.map((place, i) => (
-              <PlaceCard key={place.id} place={place} index={i} />
-            ))}
-          </div>
-        </div>
-      </section>
 
       {/* CTA */}
       <section className="py-20">

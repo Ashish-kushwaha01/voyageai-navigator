@@ -9,7 +9,7 @@ interface RazorpayOptions {
   description: string;
   image?: string;
   order_id?: string;
-  handler: (response: any) => void;
+  handler: (response: { razorpay_payment_id: string; }) => void;
   prefill?: {
     name?: string;
     email?: string;
@@ -22,7 +22,10 @@ interface RazorpayOptions {
 
 declare global {
   interface Window {
-    Razorpay: new (options: RazorpayOptions) => any;
+    Razorpay: new (options: RazorpayOptions) => {
+      open: () => void;
+      on: (eventName: string, callback: (response: any) => void) => void;
+    };
   }
 }
 
@@ -63,7 +66,7 @@ export function useRazorpayPayment() {
     const paymentOptions: RazorpayOptions = {
       key,
       ...options,
-      handler: (response: any) => {
+      handler: (response: { razorpay_payment_id: string }) => {
         // Handle success or failure here
         console.log("Payment response:", response);
         options.handler(response); // Call the provided handler
