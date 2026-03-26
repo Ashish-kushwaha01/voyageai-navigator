@@ -4,7 +4,7 @@
  * Fallback mock data is returned if webhooks fail.
  */
 
-const N8N_BASE_URL = import.meta.env.VITE_N8N_WEBHOOK_URL || "https://your-n8n-instance.app/webhook";
+const N8N_BASE_URL = import.meta.env.VITE_N8N_WEBHOOK_URL || "https://voyageai.app.n8n.cloud/webhook";
 
 interface WebhookOptions {
   timeout?: number;
@@ -58,19 +58,72 @@ export interface Place {
   videoId: string;
   rating: number;
   category: string;
+  moreInfo?: string;
+  location?: {
+    name: string;
+    lat: number;
+    lng: number;
+  };
+  viewedAt?: number; // Timestamp for history tracking
 }
 
-const mockPlaces: Place[] = [
-  { id: "1", name: "Santorini", country: "Greece", description: "Iconic white-washed buildings overlooking the Aegean Sea", imageUrl: "", videoId: "dQw4w9WgXcQ", rating: 4.9, category: "Beach" },
-  { id: "2", name: "Kyoto", country: "Japan", description: "Ancient temples surrounded by serene bamboo forests", imageUrl: "", videoId: "dQw4w9WgXcQ", rating: 4.8, category: "Culture" },
-  { id: "3", name: "Machu Picchu", country: "Peru", description: "Mystical Incan citadel high in the Andes mountains", imageUrl: "", videoId: "dQw4w9WgXcQ", rating: 4.9, category: "Adventure" },
-  { id: "4", name: "Bali", country: "Indonesia", description: "Tropical paradise with lush rice terraces and temples", imageUrl: "", videoId: "dQw4w9WgXcQ", rating: 4.7, category: "Beach" },
-  { id: "5", name: "Swiss Alps", country: "Switzerland", description: "Breathtaking mountain scenery and charming villages", imageUrl: "", videoId: "dQw4w9WgXcQ", rating: 4.8, category: "Adventure" },
-  { id: "6", name: "Marrakech", country: "Morocco", description: "Vibrant souks, palaces, and rich cultural heritage", imageUrl: "", videoId: "dQw4w9WgXcQ", rating: 4.6, category: "Culture" },
-];
+// New interface for the search webhook response
+export interface LocationSearchResponse {
+  youtube_video_id: string;
+  title: string;
+  image: string;
+  description: string;
+  more_info: string;
+  location?: {
+    name: string;
+    lat: number;
+    lng: number;
+  };
+}
 
-export async function fetchPlaces(query?: string) {
-  return callWebhook<Place[]>("/explore-places", { query: query || "" }, mockPlaces);
+// Modify fetchPlaces to use the new search webhook when a query is present
+export async function fetchPlaces(query?: string): Promise<{ data: Place[]; isMock: boolean }> {
+  if (query) {
+    const searchWebhookUrl = "https://voyageai.app.n8n.cloud/webhook/search";
+    const payload = { location: query }; // Assuming the webhook expects 'location' as the key
+
+    try {
+      const res = await fetch(searchWebhookUrl, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+
+      if (!res.ok) {
+        throw new Error(`Search webhook returned ${res.status}`);
+      }
+
+      const data: LocationSearchResponse = await res.json();
+
+      // Map the webhook response to a Place object
+      const newPlace: Place = {
+        id: data.youtube_video_id, // Using video ID as a unique ID for now
+        name: data.title,
+        country: data.description.split(',')[0].trim() || "Unknown Country", // Attempt to extract country from description
+        description: data.description,
+        imageUrl: data.image,
+        videoId: data.youtube_video_id,
+        rating: 4.5, // Default rating
+        category: "General", // Default category, can be improved if webhook provides it
+        moreInfo: data.more_info,
+        location: data.location,
+      };
+
+      return { data: [newPlace], isMock: false }; // Return as an array containing the single result
+    } catch (error) {
+      console.error("Error calling location search webhook:", error);
+      // Fallback to an empty array if the webhook fails for a specific query
+      return { data: [], isMock: true };
+    }
+  } else {
+    // Original logic for when no query is provided (e.g., initial load or category browsing)
+    return { data: [], isMock: false }; // Return empty array when no query is provided
+  }
 }
 
 // ── AI Guide ──

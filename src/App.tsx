@@ -8,6 +8,7 @@ import Explore from "./pages/Explore";
 import Dashboard from "./pages/Dashboard";
 import Pricing from "./pages/Pricing";
 import Login from "./pages/Login";
+import HistoryPage from "./pages/HistoryPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -24,6 +25,7 @@ const App = () => (
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/pricing" element={<Pricing />} />
           <Route path="/login" element={<Login />} />
+          <Route path="/history" element={<HistoryPage />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
