@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Search, Filter, MapPin } from "lucide-react";
@@ -27,6 +27,7 @@ export default function ExplorePage() {
   const [query, setQuery] = useState("");
   const [searchInput, setSearchInput] = useState(""); // New state for input field
   const [activeCategory, setActiveCategory] = useState("All");
+  const lastAddedPlaceId = useRef<string | null>(null);
 
   useEffect(() => {
     (async () => {
@@ -59,13 +60,25 @@ export default function ExplorePage() {
         if (selectedPlaceId !== foundPlace.id) {
           navigate(`/explore?place=${foundPlace.id}`);
         }
-        addPlaceToHistory(foundPlace); // Add to history
+        
+        // Only add to history if it's not the last one added to prevent loops
+        if (lastAddedPlaceId.current !== foundPlace.id) {
+          addPlaceToHistory(foundPlace); // Add to history
+          lastAddedPlaceId.current = foundPlace.id;
+        }
       }
     })();
-  }, [query, selectedPlaceId, navigate, addPlaceToHistory, history]);
+    // Removed 'history' from dependencies to prevent infinite loop when history is updated
+  }, [query, selectedPlaceId, navigate, addPlaceToHistory]);
 
   const handleSearch = () => {
-    setQuery(searchInput);
+    if (searchInput.trim()) {
+      setQuery(searchInput);
+      // Reset selected place when searching to show new results
+      if (selectedPlaceId) {
+        navigate("/explore");
+      }
+    }
   };
 
   const filtered = query
@@ -142,7 +155,7 @@ export default function ExplorePage() {
                       height="100%"
                       src={`https://www.youtube.com/embed/${selectedPlace.videoId}`}
                       frameBorder="0"
-                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
                       allowFullScreen
                       title={selectedPlace.name}
                     ></iframe>
@@ -151,6 +164,7 @@ export default function ExplorePage() {
                       src={selectedPlace.imageUrl}
                       alt={selectedPlace.name}
                       className="w-full h-full object-cover"
+                      onError={(e) => (e.currentTarget.src = "https://images.unsplash.com/photo-1488085061387-422e29b40080?w=600&h=400&fit=crop")}
                     />
                   ) : (
                     <div className="text-center text-muted-foreground">

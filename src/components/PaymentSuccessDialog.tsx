@@ -35,9 +35,11 @@ export function PaymentSuccessDialog({ isOpen, onClose, paymentId }: PaymentSucc
               Go to Dashboard
             </Button>
           </Link>
-          <Button onClick={onClose} variant="outline" className="w-full">
-            Explore New Places
-          </Button>
+          <Link to="/explore" className="w-full mt-2">
+            <Button onClick={onClose} variant="outline" className="w-full">
+              Explore New Places
+            </Button>
+          </Link>
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>

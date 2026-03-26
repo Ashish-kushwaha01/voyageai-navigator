@@ -137,7 +137,7 @@ export default function DashboardPage() {
             >
               <h2 className="font-display text-xl font-bold mb-4">Recent Activity</h2>
               <div className="space-y-4">
-                {history.map((place) => (
+                {history.slice(0, 5).map((place) => (
                   <Link to={`/explore?place=${place.id}`} key={place.id} className="flex items-center gap-3 p-2 rounded-lg hover:bg-muted transition-colors cursor-pointer">
                     <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center">
                       <Clock className="w-4 h-4 text-muted-foreground" />
@@ -160,7 +160,7 @@ export default function DashboardPage() {
             >
               <h2 className="font-display text-xl font-bold mb-4">Saved Places</h2>
               <div className="space-y-4">
-                {bookmarks.map((place) => (
+                {bookmarks.slice(0, 5).map((place) => (
                   <Link to={`/explore?place=${place.id}`} key={place.id} className="flex items-center gap-3 p-2 rounded-lg hover:bg-muted transition-colors cursor-pointer">
                     <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center">
                       <MapPin className="w-4 h-4 text-muted-foreground" />

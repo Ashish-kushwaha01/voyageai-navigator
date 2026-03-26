@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { motion } from "framer-motion";
 import { MapPin, Star, Play } from "lucide-react";
 import { Link } from "react-router-dom";
@@ -22,6 +23,8 @@ const placeImages: Record<string, string> = {
 export default function PlaceCard({ place, index }: { place: Place; index: number }) {
   const img = place.imageUrl || placeImages[place.name] || "https://images.unsplash.com/photo-1488085061387-422e29b40080?w=600&h=400&fit=crop";
 
+  const [imgSrc, setImgSrc] = useState(img);
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 30 }}
@@ -36,10 +39,11 @@ export default function PlaceCard({ place, index }: { place: Place; index: numbe
         {/* Image */}
         <div className="relative aspect-[4/3] overflow-hidden">
           <img
-            src={img}
+            src={imgSrc}
             alt={place.name}
             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
             loading="lazy"
+            onError={() => setImgSrc("https://images.unsplash.com/photo-1488085061387-422e29b40080?w=600&h=400&fit=crop")}
           />
           <div className="absolute inset-0 bg-gradient-to-t from-foreground/60 to-transparent" />
           <div className="absolute top-3 left-3">

@@ -38,18 +38,13 @@ export default function Navbar() {
 
   const confirmPayment = () => {
     openPaymentGateway({
-      amount: 50000, // Amount in paisa (e.g., 50000 paisa = 500 INR)
+      amount: 49900, // Amount in paise for ₹499
       currency: "INR",
       name: "VoyageAI Premium",
       description: "Unlock premium features for VoyageAI",
       handler: (response: { razorpay_payment_id: string }) => {
         setPaymentId(response.razorpay_payment_id);
         setIsPaymentSuccessDialogOpen(true);
-      },
-      prefill: {
-        name: "VoyageAI User",
-        email: "user@example.com",
-        contact: "9999999999",
       },
     });
     setIsAlertDialogOpen(false);

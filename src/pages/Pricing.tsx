@@ -19,52 +19,56 @@ import {
 } from "@/components/ui/alert-dialog";
 
 const plans = [
-  {
-    name: "Free",
-    price: "$0",
-    period: "forever",
-    description: "Perfect for casual explorers",
-    features: [
-      "Browse all destinations",
-      "5 AI Guide queries/month",
-      "Watch virtual tours",
-      "Basic map view",
-    ],
-    cta: "Current Plan",
-    highlight: false,
-  },
-  {
-    name: "Premium",
-    price: "$9",
-    period: "/month",
-    description: "For serious travelers and planners",
-    features: [
-      "Everything in Free",
-      "Unlimited AI Guide queries",
-      "Trip Planner with itineraries",
-      "Priority recommendations",
-      "Offline saved places",
-      "Street View integration",
-    ],
-    cta: "Upgrade Now",
-    highlight: true,
-  },
-  {
-    name: "Team",
-    price: "$29",
-    period: "/month",
-    description: "Plan trips with friends and family",
-    features: [
-      "Everything in Premium",
-      "Up to 5 members",
-      "Shared itineraries",
-      "Collaborative planning",
-      "Travel group chat",
-    ],
-    cta: "Coming Soon",
-    highlight: false,
-  },
-];
+    {
+      name: "Free",
+      price: "₹0",
+      amount: 0,
+      period: "forever",
+      description: "Perfect for casual explorers",
+      features: [
+        "Browse all destinations",
+        "5 AI Guide queries/month",
+        "Watch virtual tours",
+        "Basic map view",
+      ],
+      buttonText: "Current Plan",
+      buttonVariant: "default",
+    },
+    {
+      name: "Premium",
+      price: "₹499",
+      amount: 49900,
+      period: "/month",
+      description: "For serious travelers and planners",
+      features: [
+        "Everything in Free",
+        "Unlimited AI Guide queries",
+        "Trip Planner with itineraries",
+        "Priority recommendations",
+        "Offline saved places",
+        "Street View integration",
+      ],
+      buttonText: "Upgrade Now",
+      buttonVariant: "premium",
+    },
+    {
+      name: "Team",
+      price: "₹999",
+      amount: 99900,
+      period: "/month",
+      description: "Plan trips with friends and family",
+      features: [
+        "Everything in Premium",
+        "Up to 5 members",
+        "Shared itineraries",
+        "Collaborative planning",
+        "Travel group chat",
+      ],
+      buttonText: "Coming Soon",
+      buttonVariant: "default",
+      disabled: true,
+    },
+  ];
 
 export default function PricingPage() {
   const { openPaymentGateway } = useRazorpayPayment();
@@ -81,7 +85,7 @@ export default function PricingPage() {
   const confirmPayment = () => {
     if (selectedPlan) {
       openPaymentGateway({
-        amount: selectedPlan.amount * 100, // Convert to paisa
+        amount: selectedPlan.amount, // Amount is already in Paise
         currency: "INR",
         name: `VoyageAI ${selectedPlan.name}`,
         description: `Upgrade to ${selectedPlan.name} Plan`,
@@ -123,12 +127,12 @@ export default function PricingPage() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: i * 0.1 }}
                 className={`rounded-2xl p-6 md:p-8 flex flex-col ${
-                  plan.highlight
+                  plan.buttonVariant === "premium"
                     ? "bg-hero-gradient text-primary-foreground shadow-glow ring-2 ring-primary/20 scale-[1.03]"
                     : "bg-card shadow-elevated"
                 }`}
               >
-                {plan.highlight && (
+                {plan.buttonVariant === "premium" && (
                   <div className="inline-flex items-center gap-1 bg-primary-foreground/20 text-primary-foreground text-xs font-semibold px-3 py-1 rounded-full mb-4 self-start">
                     <Sparkles className="w-3 h-3" /> Most Popular
                   </div>
@@ -136,14 +140,14 @@ export default function PricingPage() {
                 <h3 className="font-display text-xl font-bold">{plan.name}</h3>
                 <div className="mt-2 flex items-baseline gap-1">
                   <span className="font-display text-4xl font-bold">{plan.price}</span>
-                  <span className={`text-sm ${plan.highlight ? "opacity-80" : "text-muted-foreground"}`}>{plan.period}</span>
+                  <span className={`text-sm ${plan.buttonVariant === "premium" ? "opacity-80" : "text-muted-foreground"}`}>{plan.period}</span>
                 </div>
-                <p className={`text-sm mt-2 ${plan.highlight ? "opacity-80" : "text-muted-foreground"}`}>{plan.description}</p>
+                <p className={`text-sm mt-2 ${plan.buttonVariant === "premium" ? "opacity-80" : "text-muted-foreground"}`}>{plan.description}</p>
 
                 <ul className="mt-6 space-y-3 flex-1">
                   {plan.features.map((f) => (
                     <li key={f} className="flex items-start gap-2 text-sm">
-                      <Check className={`w-4 h-4 mt-0.5 flex-shrink-0 ${plan.highlight ? "text-primary-foreground" : "text-primary"}`} />
+                      <Check className={`w-4 h-4 mt-0.5 flex-shrink-0 ${plan.buttonVariant === "premium" ? "text-primary-foreground" : "text-primary"}`} />
                       {f}
                     </li>
                   ))}
@@ -152,15 +156,16 @@ export default function PricingPage() {
                 <Button
                   size="lg"
                   className={`mt-8 w-full ${
-                    plan.highlight
+                    plan.buttonVariant === "premium"
                       ? "bg-primary-foreground text-primary hover:bg-primary-foreground/90"
-                      : plan.cta === "Coming Soon"
+                      : plan.buttonText === "Coming Soon"
                       ? "opacity-60 pointer-events-none"
                       : "bg-hero-gradient text-primary-foreground hover:opacity-90"
                   }`}
-                  onClick={() => plan.cta === "Upgrade Now" && handleUpgradeClick(plan.name, parseFloat(plan.price.replace('$', '')))}
+                  onClick={() => plan.buttonText === "Upgrade Now" && handleUpgradeClick(plan.name, plan.amount)}
+                  disabled={plan.disabled}
                 >
-                  {plan.cta}
+                  {plan.buttonText}
                 </Button>
               </motion.div>
             ))}
