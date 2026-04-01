@@ -1,10 +1,12 @@
 import { useState } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { Globe, Menu, X, User, Sparkles, Check } from "lucide-react";
+import { Globe, Menu, X, User, Sparkles, Check, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useRazorpayPayment } from "@/hooks/use-razorpay-payment";
 import { PaymentSuccessDialog } from "@/components/PaymentSuccessDialog";
+import { useAuth } from "@/contexts/AuthContext";
+import { toast } from "sonner";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -27,13 +29,31 @@ const navLinks = [
 export default function Navbar() {
   const [open, setOpen] = useState(false);
   const location = useLocation();
+  const navigate = useNavigate();
+  const { user, signOut } = useAuth();
   const { openPaymentGateway } = useRazorpayPayment();
   const [isAlertDialogOpen, setIsAlertDialogOpen] = useState(false);
   const [isPaymentSuccessDialogOpen, setIsPaymentSuccessDialogOpen] = useState(false);
+  const [isLoginRequiredDialogOpen, setIsLoginRequiredDialogOpen] = useState(false);
   const [paymentId, setPaymentId] = useState("");
 
   const handlePremiumClick = () => {
-    setIsAlertDialogOpen(true);
+    if (!user) {
+      setIsLoginRequiredDialogOpen(true);
+    } else {
+      setIsAlertDialogOpen(true);
+    }
+  };
+
+  const handleSignOut = async () => {
+    try {
+      await signOut();
+      toast.success("Signed out successfully!");
+      navigate("/");
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "An unexpected error occurred.";
+      toast.error(message);
+    }
   };
 
   const confirmPayment = () => {
@@ -82,11 +102,17 @@ export default function Navbar() {
 
         {/* Desktop actions */}
         <div className="hidden md:flex items-center gap-3">
-          <Link to="/login">
-            <Button variant="ghost" size="sm" className="gap-2">
-              <User className="w-4 h-4" /> Sign In
+          {user ? (
+            <Button variant="ghost" size="sm" className="gap-2" onClick={handleSignOut}>
+              <LogOut className="w-4 h-4" /> Sign Out
             </Button>
-          </Link>
+          ) : (
+            <Link to="/login">
+              <Button variant="ghost" size="sm" className="gap-2">
+                <User className="w-4 h-4" /> Sign In
+              </Button>
+            </Link>
+          )}
           <Button size="sm" className="bg-hero-gradient text-primary-foreground gap-2 hover:opacity-90" onClick={handlePremiumClick}>
               <Sparkles className="w-4 h-4" /> Get Premium
             </Button>
@@ -123,11 +149,17 @@ export default function Navbar() {
                 </Link>
               ))}
               <hr className="border-border my-2" />
-              <Link to="/login" onClick={() => setOpen(false)}>
-                <Button variant="ghost" className="w-full justify-start gap-2">
-                  <User className="w-4 h-4" /> Sign In
+              {user ? (
+                <Button variant="ghost" className="w-full justify-start gap-2" onClick={() => { setOpen(false); handleSignOut(); }}>
+                  <LogOut className="w-4 h-4" /> Sign Out
                 </Button>
-              </Link>
+              ) : (
+                <Link to="/login" onClick={() => setOpen(false)}>
+                  <Button variant="ghost" className="w-full justify-start gap-2">
+                    <User className="w-4 h-4" /> Sign In
+                  </Button>
+                </Link>
+              )}
               <Button className="w-full bg-hero-gradient text-primary-foreground gap-2" onClick={() => { setOpen(false); handlePremiumClick(); }}>
                   <Sparkles className="w-4 h-4" /> Get Premium
                 </Button>
@@ -171,6 +203,28 @@ export default function Navbar() {
           <AlertDialogFooter className="flex flex-col-reverse sm:flex-col sm:space-x-0 sm:space-y-2 mt-4">
             <AlertDialogAction onClick={confirmPayment} className="w-full bg-hero-gradient text-primary-foreground text-lg py-2 rounded-md hover:opacity-90 transition-opacity">
               Start Pro Trial — ₹499
+            </AlertDialogAction>
+            <AlertDialogCancel className="w-full mt-2">Cancel</AlertDialogCancel>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Login Required Dialog */}
+      <AlertDialog open={isLoginRequiredDialogOpen} onOpenChange={setIsLoginRequiredDialogOpen}>
+        <AlertDialogContent className="max-w-md p-6 bg-card rounded-lg shadow-lg">
+          <AlertDialogHeader className="flex flex-col items-center text-center">
+            <User className="w-10 h-10 text-primary mb-3" />
+            <AlertDialogTitle className="text-2xl font-bold text-foreground">Login Required</AlertDialogTitle>
+            <AlertDialogDescription className="text-muted-foreground text-sm mt-2">
+              You need to be logged in to access premium features.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="flex flex-col-reverse sm:flex-col sm:space-x-0 sm:space-y-2 mt-4">
+            <AlertDialogAction onClick={() => {
+              setIsLoginRequiredDialogOpen(false);
+              navigate("/login");
+            }} className="w-full bg-hero-gradient text-primary-foreground text-lg py-2 rounded-md hover:opacity-90 transition-opacity">
+              Login Now
             </AlertDialogAction>
             <AlertDialogCancel className="w-full mt-2">Cancel</AlertDialogCancel>
           </AlertDialogFooter>

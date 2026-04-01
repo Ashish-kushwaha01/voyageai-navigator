@@ -8,6 +8,8 @@ import { Link } from "react-router-dom";
 import { useHistory } from "@/hooks/use-history";
 import { useBookmarks } from "@/hooks/use-bookmarks";
 import Sidebar from "@/components/Sidebar";
+import PlaceCard from "@/components/PlaceCard"; // Import PlaceCard
+import { formatDistanceToNow } from "date-fns"; // Import formatDistanceToNow
 
 export default function DashboardPage() {
   const { history } = useHistory();
@@ -137,17 +139,25 @@ export default function DashboardPage() {
             >
               <h2 className="font-display text-xl font-bold mb-4">Recent Activity</h2>
               <div className="space-y-4">
-                {history.slice(0, 5).map((place) => (
-                  <Link to={`/explore?place=${place.id}`} key={place.id} className="flex items-center gap-3 p-2 rounded-lg hover:bg-muted transition-colors cursor-pointer">
-                    <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center">
-                      <Clock className="w-4 h-4 text-muted-foreground" />
-                    </div>
-                    <div>
-                      <p className="text-sm font-medium">{place.name}</p>
-                      <p className="text-xs text-muted-foreground">Viewed</p>
-                    </div>
-                  </Link>
-                ))}
+                {history.length > 0 ? (
+                  history.slice(0, 5).map((item) => (
+                    <Link to={`/explore?place=${item.id}`} key={item.id} className="flex items-center gap-3 p-2 rounded-lg hover:bg-muted transition-colors">
+                      <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center overflow-hidden">
+                        {item.image_url ? (
+                          <img src={item.image_url} alt={item.place_name} className="w-full h-full object-cover" />
+                        ) : (
+                          <MapPin className="w-4 h-4 text-muted-foreground" />
+                        )}
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium">{item.place_name}</p>
+                        <p className="text-xs text-muted-foreground">Viewed {formatDistanceToNow(new Date(item.viewed_at), { addSuffix: true })}</p>
+                      </div>
+                    </Link>
+                  ))
+                ) : (
+                  <p className="text-muted-foreground">No recent activity.</p>
+                )}
               </div>
             </motion.div>
 
@@ -160,17 +170,25 @@ export default function DashboardPage() {
             >
               <h2 className="font-display text-xl font-bold mb-4">Saved Places</h2>
               <div className="space-y-4">
-                {bookmarks.slice(0, 5).map((place) => (
-                  <Link to={`/explore?place=${place.id}`} key={place.id} className="flex items-center gap-3 p-2 rounded-lg hover:bg-muted transition-colors cursor-pointer">
-                    <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center">
-                      <MapPin className="w-4 h-4 text-muted-foreground" />
-                    </div>
-                    <div>
-                      <p className="text-sm font-medium">{place.name}</p>
-                      <p className="text-xs text-muted-foreground">Bookmarked</p>
-                    </div>
-                  </Link>
-                ))}
+                {bookmarks.length > 0 ? (
+                  bookmarks.slice(0, 5).map((place) => (
+                    <Link to={`/explore?place=${place.id}`} key={place.id} className="flex items-center gap-3 p-2 rounded-lg hover:bg-muted transition-colors" >
+                      <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center overflow-hidden">
+                        {place.imageUrl ? (
+                          <img src={place.imageUrl} alt={place.name} className="w-full h-full object-cover" />
+                        ) : (
+                          <MapPin className="w-4 h-4 text-muted-foreground" />
+                        )}
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium">{place.name}</p>
+                        <p className="text-xs text-muted-foreground">Bookmarked</p>
+                      </div>
+                    </Link>
+                  ))
+                ) : (
+                  <p className="text-muted-foreground">No saved places.</p>
+                )}
               </div>
             </motion.div>
           </div>

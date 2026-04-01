@@ -1,4 +1,4 @@
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Globe, LayoutDashboard, History, BookmarkPlus, Settings, LogOut, Sparkles, CreditCard } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -14,6 +14,8 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { useState } from "react";
+import { useAuth } from "@/contexts/AuthContext";
+import { toast } from "sonner";
 
 const sidebarNavItems = [
   {
@@ -50,12 +52,21 @@ const sidebarNavItems = [
 
 export default function Sidebar() {
   const location = useLocation();
+  const navigate = useNavigate();
+  const { user, signOut } = useAuth();
   const [isLogoutDialogOpen, setIsLogoutDialogOpen] = useState(false);
 
-  const handleLogout = () => {
-    // Implement your logout logic here
-    console.log("Logging out...");
-    setIsLogoutDialogOpen(false);
+  const handleLogout = async () => {
+    try {
+      await signOut();
+      toast.success("Signed out successfully!");
+      navigate("/");
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "An unexpected error occurred.";
+      toast.error(message);
+    } finally {
+      setIsLogoutDialogOpen(false);
+    }
   };
 
   return (
@@ -112,35 +123,37 @@ export default function Sidebar() {
         </div>
 
         {/* User Info */}
-        <AlertDialog open={isLogoutDialogOpen} onOpenChange={setIsLogoutDialogOpen}>
-          <div className="flex items-center justify-between p-3 rounded-lg hover:bg-sidebar-accent/20 transition-colors cursor-pointer">
-            <div className="flex items-center gap-3">
-              <div className="w-9 h-9 rounded-full bg-primary/20 flex items-center justify-center text-primary font-semibold">
-                VM
+        {user && (
+          <AlertDialog open={isLogoutDialogOpen} onOpenChange={setIsLogoutDialogOpen}>
+            <div className="flex items-center justify-between p-3 rounded-lg hover:bg-sidebar-accent/20 transition-colors cursor-pointer">
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-full bg-primary/20 flex items-center justify-center text-primary font-semibold">
+                  {user.user_metadata?.full_name ? user.user_metadata.full_name.charAt(0).toUpperCase() : user.email?.charAt(0).toUpperCase()}
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-sidebar-foreground">{user.user_metadata?.full_name || "User"}</p>
+                  <p className="text-xs text-muted-foreground truncate max-w-[120px]">{user.email}</p>
+                </div>
               </div>
-              <div>
-                <p className="text-sm font-medium text-sidebar-foreground">Vivek Mishra</p>
-                <p className="text-xs text-muted-foreground">vivekofficialonline@gm...</p>
-              </div>
+              <AlertDialogTrigger asChild>
+                <LogOut className="w-6 h-6 text-muted-foreground" />
+              </AlertDialogTrigger>
             </div>
-            <AlertDialogTrigger asChild>
-              <LogOut className="w-6 h-6 text-muted-foreground" />
-            </AlertDialogTrigger>
-          </div>
 
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <AlertDialogTitle>Are you sure you want to log out?</AlertDialogTitle>
-              <AlertDialogDescription>
-                You will be redirected to the login page.
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel>Cancel</AlertDialogCancel>
-              <AlertDialogAction onClick={handleLogout}>Logout</AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Are you sure you want to log out?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  You will be redirected to the login page.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogAction onClick={handleLogout}>Logout</AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+        )}
       </div>
     </motion.aside>
   );

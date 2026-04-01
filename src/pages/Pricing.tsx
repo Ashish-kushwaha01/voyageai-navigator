@@ -6,6 +6,10 @@ import Footer from "@/components/Footer";
 import { useRazorpayPayment } from "@/hooks/use-razorpay-payment";
 import { PaymentSuccessDialog } from "@/components/PaymentSuccessDialog";
 import { useState } from "react"; // Import useState
+import { useAuth } from "@/contexts/AuthContext"; // Import useAuth
+import { useNavigate } from "react-router-dom"; // Import useNavigate
+import { toast } from "sonner"; // Import toast
+import { LoginRequiredDialog } from "@/components/LoginRequiredDialog"; // Import LoginRequiredDialog
 import {
   AlertDialog,
   AlertDialogAction,
@@ -76,8 +80,17 @@ export default function PricingPage() {
   const [isPaymentSuccessDialogOpen, setIsPaymentSuccessDialogOpen] = useState(false);
   const [paymentId, setPaymentId] = useState("");
   const [selectedPlan, setSelectedPlan] = useState<{ name: string; amount: number } | null>(null);
+  const [isLoginRequiredDialogOpen, setIsLoginRequiredDialogOpen] = useState(false); // New state for login dialog
+
+  const { user } = useAuth(); // Use the useAuth hook
+  const navigate = useNavigate(); // Use the useNavigate hook
 
   const handleUpgradeClick = (planName: string, amount: number) => {
+    if (!user) {
+      // If user is not logged in, open the LoginRequiredDialog
+      setIsLoginRequiredDialogOpen(true);
+      return;
+    }
     setSelectedPlan({ name: planName, amount: amount });
     setIsAlertDialogOpen(true);
   };
@@ -221,6 +234,11 @@ export default function PricingPage() {
       />
 
       <Footer />
+
+      <LoginRequiredDialog
+        isOpen={isLoginRequiredDialogOpen}
+        onClose={() => setIsLoginRequiredDialogOpen(false)}
+      />
     </div>
   );
 }
