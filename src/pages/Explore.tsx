@@ -55,16 +55,10 @@ export default function ExplorePage() {
       setPlaces(fetchedPlaces);
       setLoading(false);
 
-      // Add to history if a single place is displayed, regardless of how it was fetched
-      if (fetchedPlaces.length === 1) {
+      // Add to history only if a new search was performed (query is present and no selectedPlaceId)
+      if (query && !selectedPlaceId && fetchedPlaces.length === 1) {
         const foundPlace = fetchedPlaces[0];
-        // Only add to history if it's a new place or a different place than the last one added
-        if (lastAddedPlaceId.current !== foundPlace.id) {
-          // Use the current query if available, otherwise use the place name for history
-          const historySearchQuery = query || foundPlace.name;
-          addPlaceToHistory(historySearchQuery, foundPlace);
-          lastAddedPlaceId.current = foundPlace.id;
-        }
+        addPlaceToHistory(query, foundPlace);
       }
     })();
   }, [query, selectedPlaceId, addPlaceToHistory, navigate]);

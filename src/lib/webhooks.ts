@@ -1,4 +1,6 @@
 import { v4 as uuidv4 } from 'uuid';
+import { isUUID } from './utils'; // Import isUUID utility
+import { getSupabase } from './supabase'; // Import getSupabase
 
 /**
  * n8n Webhook Integration Layer
@@ -93,9 +95,11 @@ export async function fetchPlaces(options: { query?: string; placeId?: string })
   let payload: Record<string, unknown>;
 
   if (placeId) {
-    payload = { placeId: placeId }; // Send placeId if available
+    // If placeId is provided, send it as 'id' to the webhook for n8n to handle the lookup
+    payload = { id: placeId };
   } else if (query) {
-    payload = { location: query }; // Send location if query is for general search
+    // If there's a search query, send it as 'location'
+    payload = { location: query };
   } else {
     return { data: [], isMock: false };
   }
@@ -125,7 +129,7 @@ export async function fetchPlaces(options: { query?: string; placeId?: string })
     let placesData: Place[] = [];
     if (Array.isArray(data)) {
       placesData = data.map(item => ({
-        id: uuidv4(), // Generate a new UUID for the internal ID
+        id: placeId && isUUID(placeId) ? placeId : uuidv4(), // Use provided placeId if it's a UUID, otherwise generate new
         place_id: item.youtube_video_id, // Use youtube_video_id as the place_id
         name: item.title,
         country: item.description.split(',')[0].trim() || "Unknown Country",
@@ -139,7 +143,7 @@ export async function fetchPlaces(options: { query?: string; placeId?: string })
       }));
     } else if (data) {
       placesData = [{
-        id: uuidv4(), // Generate a new UUID for the internal ID
+        id: placeId && isUUID(placeId) ? placeId : uuidv4(), // Use provided placeId if it's a UUID, otherwise generate new
         place_id: data.youtube_video_id, // Use youtube_video_id as the place_id
         name: data.title,
         country: data.description.split(',')[0].trim() || "Unknown Country",
