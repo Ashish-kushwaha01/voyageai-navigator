@@ -1,9 +1,9 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { MapPin, Star, Play } from "lucide-react";
+import { MapPin, Star, Play, Trash2 } from "lucide-react";
 import { Link } from "react-router-dom";
 import type { Place } from "@/lib/webhooks";
-import { useHistory } from "@/hooks/use-history"; // Import useHistory
+import { useHistory } from "@/hooks/use-history";
 import { useBookmarks } from "@/hooks/use-bookmarks";
 import AIGuideModal from "./AIGuideModal";
 import { Button } from "./ui/button";
@@ -24,11 +24,11 @@ const placeImages: Record<string, string> = {
   Marrakech: "https://images.unsplash.com/photo-1597212618440-806262de4f6b?w=600&h=400&fit=crop",
 };
 
-export default function PlaceCard({ place, index }: { place: Place; index?: number }) {
+export default function PlaceCard({ place, index, onDelete }: { place: Place; index?: number; onDelete?: (historyId: string) => void }) {
   const img = place.imageUrl || placeImages[place.name] || "https://images.unsplash.com/photo-1488085061387-422e29b40080?w=600&h=400&fit=crop";
 
   const [imgSrc, setImgSrc] = useState(img);
-  const { history, updateHistoryBookmarkStatus } = useHistory(); // Get history and update function
+  const { history, updateHistoryBookmarkStatus } = useHistory();
   const { isBookmarked, toggleBookmark } = useBookmarks(history, updateHistoryBookmarkStatus);
 
   return (
@@ -58,6 +58,18 @@ export default function PlaceCard({ place, index }: { place: Place; index?: numb
               {place.category}
             </span>
           </div>
+          {onDelete && (
+            <button
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                onDelete(place.id);
+              }}
+              className="absolute top-3 right-3 w-8 h-8 rounded-full bg-red-500/90 hover:bg-red-600 flex items-center justify-center transition-colors"
+            >
+              <Trash2 className="w-4 h-4 text-white" />
+            </button>
+          )}
           <div className="absolute bottom-3 right-3 w-10 h-10 rounded-full bg-primary/90 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
             <Play className="w-4 h-4 text-primary-foreground fill-primary-foreground" />
           </div>

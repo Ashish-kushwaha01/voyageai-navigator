@@ -156,5 +156,30 @@ export function useHistory() {
     }
   }, [user]);
 
-  return { history, addPlaceToHistory, updateHistoryBookmarkStatus, loading, error };
+  const deleteHistoryItem = useCallback(async (historyId: string) => {
+    if (!user) return;
+
+    try {
+      // Optimistically update local state first
+      setHistory((prevHistory) => prevHistory.filter((item) => item.id !== historyId));
+
+      // Delete from database
+      const { error } = await getSupabase()
+        .from("history")
+        .delete()
+        .eq("id", historyId)
+        .eq("user_id", user.id);
+
+      if (error) {
+        // Revert optimistic update on error
+        fetchHistory();
+        throw error;
+      }
+    } catch (err) {
+      console.error("Error deleting history item:", err);
+      setError(err instanceof Error ? err.message : "Failed to delete history item.");
+    }
+  }, [user, fetchHistory]);
+
+  return { history, addPlaceToHistory, updateHistoryBookmarkStatus, deleteHistoryItem, loading, error };
 }

@@ -9,7 +9,7 @@ import { formatDistanceToNow } from "date-fns";
 import { useHistory } from "@/hooks/use-history"; // Import the new hook
 
 export default function HistoryPage() {
-  const { history } = useHistory();
+  const { history, deleteHistoryItem } = useHistory();
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -37,8 +37,8 @@ export default function HistoryPage() {
                 <PlaceCard
                     key={item.id}
                     place={{
-                      id: item.id, // Use the history record's UUID as the PlaceCard's ID
-                      place_id: item.place_id, // Pass the actual YouTube video ID separately
+                      id: item.id,
+                      place_id: item.place_id,
                       name: item.place_name,
                       country: item.country,
                       description: item.description,
@@ -54,6 +54,7 @@ export default function HistoryPage() {
                       } : undefined,
                     }}
                     index={index}
+                    onDelete={deleteHistoryItem}
                   />
               ))}
             </div>
