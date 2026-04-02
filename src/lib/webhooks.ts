@@ -1,3 +1,7 @@
+import { v4 as uuidv4 } from 'uuid';
+import { isUUID } from './utils'; // Import isUUID utility
+import { getSupabase } from './supabase'; // Import getSupabase
+
 /**
  * n8n Webhook Integration Layer
  * All business logic flows through n8n webhooks.
@@ -37,9 +41,7 @@ async function callWebhook<T>(
       const data = await res.json();
       return { data: data as T, isMock: false };
     } catch (err) {
-      console.warn(`Webhook ${path} attempt ${attempt + 1} failed:`, err);
       if (attempt === retries) {
-        console.info("Returning fallback mock data");
         return { data: fallback, isMock: true };
       }
     }
@@ -50,12 +52,13 @@ async function callWebhook<T>(
 
 // ── Explore Places ──
 export interface Place {
-  id: string;
+  id: string; // This will now be the UUID of the history/bookmark record
+  place_id: string; // This will be the actual YouTube video ID
   name: string;
   country: string;
   description: string;
   imageUrl: string;
-  videoId: string;
+  videoId?: string;
   rating: number;
   category: string;
   moreInfo?: string;
@@ -65,6 +68,7 @@ export interface Place {
     lng: number;
   };
   viewedAt?: number; // Timestamp for history tracking
+  historyId?: string; // New: To link a Place to a HistoryItem's UUID
 }
 
 // New interface for the search webhook response
@@ -74,6 +78,7 @@ export interface LocationSearchResponse {
   image: string;
   description: string;
   more_info: string;
+  category?: string; // Add category field
   location?: {
     name: string;
     lat: number;
@@ -82,47 +87,74 @@ export interface LocationSearchResponse {
 }
 
 // Modify fetchPlaces to use the new search webhook when a query is present
-export async function fetchPlaces(query?: string): Promise<{ data: Place[]; isMock: boolean }> {
-  if (query) {
-    const searchWebhookUrl = "https://voyageai.app.n8n.cloud/webhook/search";
-    const payload = { location: query }; // Assuming the webhook expects 'location' as the key
+export async function fetchPlaces(options: { query?: string; placeId?: string }): Promise<{ data: Place[]; isMock: boolean }> {
+  const { query, placeId } = options;
+  const webhookUrl = import.meta.env.VITE_N8N_WEBHOOK_URL + "/search"; // Use the existing search webhook
+  let payload: Record<string, unknown>;
 
+  if (placeId) {
+    // If placeId is provided, send it as 'id' to the webhook for n8n to handle the lookup
+    payload = { id: placeId };
+  } else if (query) {
+    // If there's a search query, send it as 'location'
+    payload = { location: query };
+  } else {
+    return { data: [], isMock: false };
+  }
+
+  try {
+    const res = await fetch(webhookUrl, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+
+    if (!res.ok) {
+      throw new Error(`Webhook returned ${res.status}`);
+    }
+
+    const responseText = await res.text();
+    let data: LocationSearchResponse | LocationSearchResponse[];
     try {
-      const res = await fetch(searchWebhookUrl, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
+      data = JSON.parse(responseText);
+    } catch (jsonError) {
+      return { data: [], isMock: true };
+    }
 
-      if (!res.ok) {
-        throw new Error(`Search webhook returned ${res.status}`);
-      }
-
-      const data: LocationSearchResponse = await res.json();
-
-      // Map the webhook response to a Place object
-      const newPlace: Place = {
-        id: data.youtube_video_id, // Using video ID as a unique ID for now
+    let placesData: Place[] = [];
+    if (Array.isArray(data)) {
+      placesData = data.map(item => ({
+        id: placeId && isUUID(placeId) ? placeId : uuidv4(), // Use provided placeId if it's a UUID, otherwise generate new
+        place_id: item.youtube_video_id, // Use youtube_video_id as the place_id
+        name: item.title,
+        country: item.description.split(',')[0].trim() || "Unknown Country",
+        description: item.description,
+        imageUrl: item.image,
+        videoId: item.youtube_video_id,
+        rating: 4.5,
+        category: item.category || "General",
+        moreInfo: item.more_info,
+        location: item.location,
+      }));
+    } else if (data) {
+      placesData = [{
+        id: placeId && isUUID(placeId) ? placeId : uuidv4(), // Use provided placeId if it's a UUID, otherwise generate new
+        place_id: data.youtube_video_id, // Use youtube_video_id as the place_id
         name: data.title,
-        country: data.description.split(',')[0].trim() || "Unknown Country", // Attempt to extract country from description
+        country: data.description.split(',')[0].trim() || "Unknown Country",
         description: data.description,
         imageUrl: data.image,
         videoId: data.youtube_video_id,
-        rating: 4.5, // Default rating
-        category: "General", // Default category, can be improved if webhook provides it
+        rating: 4.5,
+        category: data.category || "General",
         moreInfo: data.more_info,
         location: data.location,
-      };
-
-      return { data: [newPlace], isMock: false }; // Return as an array containing the single result
-    } catch (error) {
-      console.error("Error calling location search webhook:", error);
-      // Fallback to an empty array if the webhook fails for a specific query
-      return { data: [], isMock: true };
+      }];
     }
-  } else {
-    // Original logic for when no query is provided (e.g., initial load or category browsing)
-    return { data: [], isMock: false }; // Return empty array when no query is provided
+
+    return { data: placesData, isMock: false };
+  } catch (error) {
+    return { data: [], isMock: true };
   }
 }
 

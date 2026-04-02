@@ -1,40 +1,198 @@
 import { useState, useEffect, useCallback } from "react";
-import { Place } from "@/lib/webhooks";
+import { getSupabase } from "@/lib/supabase";
+import { useAuth } from "@/contexts/AuthContext";
+import { Place } from "@/lib/webhooks"; // Assuming Place type is still relevant for some data
+import { v4 as uuidv4 } from 'uuid';
 
-const HISTORY_STORAGE_KEY = "viewedPlaces";
-const MAX_HISTORY_ITEMS = 10;
+export type HistoryItem = {
+  id: string;
+  user_id: string;
+  search_query: string; // New: The search query that led to this item
+  place_id: string;
+  place_name: string;
+  country: string;
+  description: string;
+  image_url: string;
+  video_id: string;
+  rating: number;
+  category: string;
+  more_info?: string;
+  location_name?: string;
+  location_lat?: number;
+  location_lng?: number;
+  url: string; // This will be the URL to the detailed view of the place
+  viewed_at: string; // ISO string
+  bookmarked: boolean; // New: To track if this history item is also bookmarked
+};
 
 export function useHistory() {
-  const [history, setHistory] = useState<Place[]>(() => {
-    try {
-      const storedHistory = localStorage.getItem(HISTORY_STORAGE_KEY);
-      return storedHistory ? JSON.parse(storedHistory) : [];
-    } catch (error) {
-      console.error("Failed to parse history from localStorage", error);
-      return [];
+  const { user } = useAuth();
+  const [history, setHistory] = useState<HistoryItem[]>([]);
+  const [totalHistoryCount, setTotalHistoryCount] = useState(0); // New state for total count
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const fetchTotalHistoryCount = useCallback(async () => {
+    if (!user) {
+      setTotalHistoryCount(0);
+      return;
     }
-  });
+    try {
+      const { count, error } = await getSupabase()
+        .from("history")
+        .select("*", { count: "exact" })
+        .eq("user_id", user.id);
+
+      if (error) throw error;
+      setTotalHistoryCount(count || 0);
+    } catch (err) {
+
+    }
+  }, [user]);
+
+  const fetchHistory = useCallback(async () => {
+    if (!user) {
+      setHistory([]);
+      setLoading(false);
+      return;
+    }
+
+    setLoading(true);
+    setError(null);
+    try {
+      const { data, error } = await getSupabase()
+        .from("history")
+        .select("*") // Select all columns now
+        .eq("user_id", user.id)
+        .order("viewed_at", { ascending: false })
+        .limit(10); // Limit to 10 items as before
+
+      if (error) throw error;
+      setHistory(data || []);
+    } catch (err) {
+
+    } finally {
+      setLoading(false);
+    }
+  }, [user]);
 
   useEffect(() => {
-    try {
-      localStorage.setItem(HISTORY_STORAGE_KEY, JSON.stringify(history));
-    } catch (error) {
-      console.error("Failed to save history to localStorage", error);
+    fetchHistory();
+    fetchTotalHistoryCount(); // Fetch total count when user changes
+  }, [fetchHistory, fetchTotalHistoryCount]);
+
+  // Modified addPlaceToHistory to accept search_query and a Place object
+  const addPlaceToHistory = useCallback(async (searchQuery: string, place: Place) => {
+    if (!user) {
+      return;
     }
-  }, [history]);
+    try {
+      const newHistoryItem = {
+        id: uuidv4(), // Generate a new UUID for the history record
+        user_id: user.id,
+        search_query: searchQuery,
+        place_id: place.place_id, // Use the YouTube video ID
+        place_name: place.name,
+        country: place.country,
+        description: place.description,
+        image_url: place.imageUrl,
+        video_id: place.videoId,
+        rating: place.rating,
+        category: place.category,
+        more_info: place.moreInfo,
+        location_name: place.location?.name,
+        location_lat: place.location?.lat,
+        location_lng: place.location?.lng,
+        url: `/explore?place=${place.id}`, // Use the Place's UUID for the URL
+        bookmarked: false, // Initialize as not bookmarked
+      };
 
-  const addPlaceToHistory = useCallback((place: Place) => {
-    setHistory((prevHistory) => {
-      // Remove existing entry if place.id already exists
-      const filteredHistory = prevHistory.filter((item) => item.id !== place.id);
+      const { data, error } = await getSupabase()
+        .from("history")
+        .insert([newHistoryItem])
+        .select()
+        .single();
 
-      // Add the new place with a timestamp at the beginning
-      const newHistory = [{ ...place, viewedAt: Date.now() }, ...filteredHistory];
+      if (error) {
+        if (error.code === 'PGRST204' || error.message.includes('bookmarked')) {
+          const { bookmarked, ...itemWithoutBookmarked } = newHistoryItem;
+          const { data: retryData, error: retryError } = await getSupabase()
+            .from("history")
+            .insert([itemWithoutBookmarked])
+            .select()
+            .single();
+          if (retryError) throw retryError;
+          setHistory((prevHistory) => {
+            const updatedHistory = [retryData, ...prevHistory.filter((item) => item.place_id !== place.place_id)];
+            return updatedHistory.slice(0, 10);
+          });
+          return;
+        }
+        throw error;
+      }
 
-      // Limit the history size
-      return newHistory.slice(0, MAX_HISTORY_ITEMS);
-    });
-  }, []); // Empty dependency array means this function is memoized once
+      setHistory((prevHistory) => {
+        // Filter out existing entry for the same place_id to ensure uniqueness and recency
+        const updatedHistory = [data, ...prevHistory.filter((item) => item.place_id !== place.place_id)];
+        return updatedHistory.slice(0, 10);
+      });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to add place to history.");
+    }
+  }, [user]);
 
-  return { history, addPlaceToHistory };
+  const updateHistoryBookmarkStatus = useCallback(async (placeId: string, isBookmarked: boolean) => {
+    if (!user) return;
+
+    try {
+      // Optimistically update local state first
+      setHistory((prevHistory) =>
+        prevHistory.map((item) =>
+          item.place_id === placeId ? { ...item, bookmarked: isBookmarked } : item
+        )
+      );
+
+      // Try updating database, handle missing 'bookmarked' column gracefully
+      const { error } = await getSupabase()
+        .from("history")
+        .update({ bookmarked: isBookmarked })
+        .eq("user_id", user.id)
+        .eq("place_id", placeId);
+
+      if (error) {
+        if (error.code === 'PGRST204' || error.message.includes('bookmarked')) {
+          return;
+        }
+        throw error;
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to update history bookmark status.");
+    }
+  }, [user]);
+
+  const deleteHistoryItem = useCallback(async (historyId: string) => {
+    if (!user) return;
+
+    try {
+      // Optimistically update local state first
+      setHistory((prevHistory) => prevHistory.filter((item) => item.id !== historyId));
+
+      // Delete from database
+      const { error } = await getSupabase()
+        .from("history")
+        .delete()
+        .eq("id", historyId)
+        .eq("user_id", user.id);
+
+      if (error) {
+        // Revert optimistic update on error
+        fetchHistory();
+        throw error;
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to delete history item.");
+    }
+  }, [user, fetchHistory]);
+
+  return { history, addPlaceToHistory, updateHistoryBookmarkStatus, deleteHistoryItem, loading, error, totalHistoryCount };
 }

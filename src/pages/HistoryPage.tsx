@@ -4,18 +4,18 @@ import { motion } from "framer-motion";
 import { MapPin, Star, Clock } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
-import { Place } from "@/lib/webhooks";
+import PlaceCard from "@/components/PlaceCard"; // Import PlaceCard
 import { formatDistanceToNow } from "date-fns";
 import { useHistory } from "@/hooks/use-history"; // Import the new hook
 
 export default function HistoryPage() {
-  const { history } = useHistory();
+  const { history, deleteHistoryItem } = useHistory();
 
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-screen">
       <Navbar />
 
-      <main className="pt-24 pb-16 flex-1 overflow-y-auto">
+      <main className="pt-24 flex-1 overflow-y-auto pb-16">
         <div className="container mx-auto px-4">
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="mb-8">
             <h1 className="font-display text-3xl md:text-4xl font-bold">
@@ -33,58 +33,29 @@ export default function HistoryPage() {
             </div>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              {history.map((place, index) => (
-                <motion.div
-                  key={place.id}
-                  initial={{ opacity: 0, y: 30 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ delay: index * 0.1, duration: 0.5 }}
-                >
-                  <Link
-                    to={`/explore?place=${place.id}`}
-                    className="group block rounded-xl overflow-hidden shadow-elevated bg-card hover:shadow-glow transition-shadow duration-300"
-                  >
-                    {/* Image */}
-                    <div className="relative aspect-[4/3] overflow-hidden">
-                      <img
-                        src={place.imageUrl}
-                        alt={place.name}
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                        loading="lazy"
-                      />
-                      <div className="absolute inset-0 bg-gradient-to-t from-foreground/60 to-transparent" />
-                      <div className="absolute top-3 left-3">
-                        <span className={`text-xs font-semibold px-2.5 py-1 rounded-full bg-muted text-muted-foreground`}>
-                          {place.category}
-                        </span>
-                      </div>
-                    </div>
-
-                    {/* Info */}
-                    <div className="p-4">
-                      <h3 className="font-display font-semibold text-lg text-card-foreground">{place.name}</h3>
-                      <div className="flex items-center gap-1.5 mt-1 text-muted-foreground text-sm">
-                        <MapPin className="w-3.5 h-3.5" />
-                        {place.country}
-                      </div>
-                      <p className="text-sm text-muted-foreground mt-2 line-clamp-2">{place.description}</p>
-                      <div className="flex items-center gap-1 mt-3">
-                        <Star className="w-4 h-4 text-sunset fill-sunset" />
-                        <span className="text-sm font-medium text-card-foreground">{place.rating}</span>
-                        {place.viewedAt && (
-                          <>
-                            <span className="mx-1 text-muted-foreground">•</span>
-                            <Clock className="w-3.5 h-3.5 text-muted-foreground" />
-                            <span className="text-sm text-muted-foreground">
-                              {formatDistanceToNow(new Date(place.viewedAt), { addSuffix: true })}
-                            </span>
-                          </>
-                        )}
-                      </div>
-                    </div>
-                  </Link>
-                </motion.div>
+              {history.map((item, index) => (
+                <PlaceCard
+                    key={item.id}
+                    place={{
+                      id: item.id,
+                      place_id: item.place_id,
+                      name: item.place_name,
+                      country: item.country,
+                      description: item.description,
+                      imageUrl: item.image_url,
+                      videoId: item.video_id,
+                      rating: item.rating,
+                      category: item.category,
+                      moreInfo: item.more_info,
+                      location: item.location_name ? {
+                        name: item.location_name,
+                        lat: item.location_lat,
+                        lng: item.location_lng,
+                      } : undefined,
+                    }}
+                    index={index}
+                    onDelete={deleteHistoryItem}
+                  />
               ))}
             </div>
           )}

@@ -1,43 +1,72 @@
+import { useState, useEffect } from "react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { useState } from "react";
 import { useToast } from "@/components/ui/use-toast";
 import Sidebar from "@/components/Sidebar";
+import { useAuth } from "@/contexts/AuthContext";
+import { getSupabase } from "@/lib/supabase";
 
 export default function SettingsPage() {
-  const [username, setUsername] = useState("Vivek Mishra");
-  const [email, setEmail] = useState("vivekofficialonline@gmail.com");
-  const [newEmail, setNewEmail] = useState("");
+  const { user, fetchUserProfile } = useAuth();
+  const [username, setUsername] = useState(user?.user_metadata?.full_name || "");
+  const [email, setEmail] = useState(user?.email || "");
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [loading, setLoading] = useState(false);
 
   const { toast } = useToast();
 
-  const handleUpdateUsername = () => {
-    // In a real application, you would send this to your backend
-    console.log("Updating username:", username);
-    toast({
-      title: "Username Updated",
-      description: "Your username has been successfully updated.",
-    });
+  useEffect(() => {
+    if (user) {
+      setUsername(user.user_metadata?.full_name || "");
+      setEmail(user.email || "");
+    }
+  }, [user]);
+
+  const handleUpdateUsername = async () => {
+    if (!user) return;
+    setLoading(true);
+    try {
+      // Update in auth.users table
+      const { error: authError } = await getSupabase().auth.updateUser({
+        data: { full_name: username },
+      });
+      if (authError) throw authError;
+
+      // Update in profiles table
+      const { error: profileError } = await getSupabase()
+        .from('profiles')
+        .update({ full_name: username })
+        .eq('id', user.id);
+      if (profileError) throw profileError;
+
+      await fetchUserProfile(); // Refresh user profile in context
+
+      toast({
+        title: "Username Updated",
+        description: "Your username has been successfully updated.",
+      });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Failed to update username.";
+      toast({
+        title: "Error",
+        description: message,
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleChangeEmail = () => {
-    // In a real application, you would send this to your backend
-    console.log("Changing email to:", newEmail);
-    toast({
-      title: "Email Change Initiated",
-      description: "A confirmation link has been sent to your new email address.",
-    });
-    setNewEmail("");
-  };
 
-  const handleChangePassword = () => {
+
+  const handleChangePassword = async () => {
+    if (!user || !newPassword || !confirmPassword) return;
     if (newPassword !== confirmPassword) {
       toast({
         title: "Password Mismatch",
@@ -46,15 +75,29 @@ export default function SettingsPage() {
       });
       return;
     }
-    // In a real application, you would send this to your backend
-    console.log("Changing password...");
-    toast({
-      title: "Password Changed",
-      description: "Your password has been successfully updated.",
-    });
-    setCurrentPassword("");
-    setNewPassword("");
-    setConfirmPassword("");
+    setLoading(true);
+    try {
+      const { error } = await getSupabase().auth.updateUser({
+        password: newPassword,
+      });
+      if (error) throw error;
+      toast({
+        title: "Password Changed",
+        description: "Your password has been successfully updated.",
+      });
+      setCurrentPassword("");
+      setNewPassword("");
+      setConfirmPassword("");
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Failed to change password.";
+      toast({
+        title: "Error",
+        description: message,
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleDeleteAccount = () => {
@@ -71,6 +114,7 @@ export default function SettingsPage() {
     <div className="min-h-screen flex">
       <Sidebar />
       <div className="flex flex-col flex-1 lg:ml-64">
+        <Navbar />
         <main className="flex-1 pt-24 pb-16 overflow-y-auto">
           <div className="container mx-auto px-4">
             <h1 className="font-display text-3xl md:text-4xl font-bold mb-8">Settings</h1>
@@ -92,26 +136,7 @@ export default function SettingsPage() {
               </CardContent>
             </Card>
 
-            {/* Email Settings */}
-            <Card className="mb-6">
-              <CardHeader>
-                <CardTitle>Email Settings</CardTitle>
-                <CardDescription>Change your email address.</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="grid gap-4">
-                  <div className="grid gap-2">
-                    <Label htmlFor="current-email">Current Email</Label>
-                    <Input id="current-email" type="email" value={email} disabled />
-                  </div>
-                  <div className="grid gap-2">
-                    <Label htmlFor="new-email">New Email</Label>
-                    <Input id="new-email" type="email" value={newEmail} onChange={(e) => setNewEmail(e.target.value)} />
-                  </div>
-                  <Button onClick={handleChangeEmail} className="w-fit">Change Email</Button>
-                </div>
-              </CardContent>
-            </Card>
+
 
             {/* Password Settings */}
             <Card className="mb-6">

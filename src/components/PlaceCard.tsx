@@ -1,8 +1,12 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { MapPin, Star, Play } from "lucide-react";
+import { MapPin, Star, Play, Trash2 } from "lucide-react";
 import { Link } from "react-router-dom";
 import type { Place } from "@/lib/webhooks";
+import { useHistory } from "@/hooks/use-history";
+import { useBookmarks } from "@/hooks/use-bookmarks";
+import AIGuideModal from "./AIGuideModal";
+import { Button } from "./ui/button";
 
 const categoryColors: Record<string, string> = {
   Beach: "bg-ocean/10 text-ocean",
@@ -20,10 +24,12 @@ const placeImages: Record<string, string> = {
   Marrakech: "https://images.unsplash.com/photo-1597212618440-806262de4f6b?w=600&h=400&fit=crop",
 };
 
-export default function PlaceCard({ place, index }: { place: Place; index: number }) {
+export default function PlaceCard({ place, index, onDelete }: { place: Place; index?: number; onDelete?: (historyId: string) => void }) {
   const img = place.imageUrl || placeImages[place.name] || "https://images.unsplash.com/photo-1488085061387-422e29b40080?w=600&h=400&fit=crop";
 
   const [imgSrc, setImgSrc] = useState(img);
+  const { history, updateHistoryBookmarkStatus } = useHistory();
+  const { isBookmarked, toggleBookmark } = useBookmarks(history, updateHistoryBookmarkStatus);
 
   return (
     <motion.div
@@ -33,8 +39,9 @@ export default function PlaceCard({ place, index }: { place: Place; index: numbe
       transition={{ delay: index * 0.1, duration: 0.5 }}
     >
       <Link
-        to={`/explore?place=${place.id}`}
+        to={`/explore?place=${place.id}`} // Use place.id (UUID) for the URL
         className="group block rounded-xl overflow-hidden shadow-elevated bg-card hover:shadow-glow transition-shadow duration-300"
+        data-test="place-card-link"
       >
         {/* Image */}
         <div className="relative aspect-[4/3] overflow-hidden">
@@ -51,6 +58,18 @@ export default function PlaceCard({ place, index }: { place: Place; index: numbe
               {place.category}
             </span>
           </div>
+          {onDelete && (
+            <button
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                onDelete(place.id);
+              }}
+              className="absolute top-3 right-3 w-8 h-8 rounded-full bg-red-500/90 hover:bg-red-600 flex items-center justify-center transition-colors"
+            >
+              <Trash2 className="w-4 h-4 text-white" />
+            </button>
+          )}
           <div className="absolute bottom-3 right-3 w-10 h-10 rounded-full bg-primary/90 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
             <Play className="w-4 h-4 text-primary-foreground fill-primary-foreground" />
           </div>
@@ -70,6 +89,21 @@ export default function PlaceCard({ place, index }: { place: Place; index: numbe
           </div>
         </div>
       </Link>
+      {/* AIGuideModal and Bookmark Button are outside the Link for separate actions */}
+      <div className="absolute bottom-4 left-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+        <AIGuideModal placeId={place.id} placeName={place.name} />
+        <Button
+          variant="outline"
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            toggleBookmark(place);
+          }}
+          className={isBookmarked(place.id) ? "bg-yellow-400 text-black" : ""}
+        >
+          {isBookmarked(place.id) ? "Bookmarked" : "Bookmark"}
+        </Button>
+      </div>
     </motion.div>
   );
 }

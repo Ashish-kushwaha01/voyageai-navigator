@@ -1,22 +1,55 @@
 import { motion } from "framer-motion";
-import { User, MapPin, Clock, Star, CreditCard, BookmarkPlus, LogOut, Globe, Sparkles, Compass, History, Upload, Key, Settings, TrendingUp, TrendingDown, Timer } from "lucide-react";
+import { User, MapPin, Clock, Star, CreditCard, BookmarkPlus, LogOut, Globe, Sparkles, Compass, History, Upload, Key, Settings, TrendingUp, TrendingDown, Timer, Menu } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { Link } from "react-router-dom";
 import { useHistory } from "@/hooks/use-history";
 import { useBookmarks } from "@/hooks/use-bookmarks";
 import Sidebar from "@/components/Sidebar";
+import PlaceCard from "@/components/PlaceCard"; // Import PlaceCard
+import { formatDistanceToNow } from "date-fns"; // Import formatDistanceToNow
+import { useAuth } from "@/contexts/AuthContext";
+import { useState } from "react";
 
 export default function DashboardPage() {
-  const { history } = useHistory();
+  const { history, totalHistoryCount } = useHistory();
   const { bookmarks } = useBookmarks();
+  const { user } = useAuth();
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+
+  const toggleSidebar = () => {
+    setIsSidebarOpen(!isSidebarOpen);
+  };
+
   return (
     <div className="min-h-screen flex">
-      <Sidebar />
+      {/* Mobile Header */}
+      <div className="lg:hidden fixed top-0 left-0 right-0 z-50 flex items-center justify-between h-16 px-4 bg-background border-b border-border">
+        {/* Logo */}
+        <Link to="/" className="flex items-center gap-2 group">
+          <div className="w-9 h-9 rounded-lg bg-hero-gradient flex items-center justify-center">
+            <Globe className="w-5 h-5 text-primary-foreground" />
+          </div>
+          <span className="font-display font-bold text-xl text-foreground">
+            Voyage<span className="text-gradient">AI</span>
+          </span>
+        </Link>
+
+        {/* Mobile Menu Button */}
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={toggleSidebar}
+        >
+          <Menu className="w-6 h-6" />
+        </Button>
+      </div>
+
+      <Sidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
+
       <div className="flex flex-col flex-1 lg:ml-64">
-        <main className="flex-1 pt-24 pb-16 overflow-y-auto">
+        <main className="flex-1 pt-20 pb-16 overflow-y-auto">
         <div className="container mx-auto px-4">
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
             <h1 className="font-display text-3xl md:text-4xl font-bold mb-8">Dashboard</h1>
@@ -35,7 +68,7 @@ export default function DashboardPage() {
                 <Globe className="w-6 h-6" />
               </div>
               <div>
-                <div className="text-2xl font-bold">{history.length}</div>
+                <div className="text-2xl font-bold">{totalHistoryCount}</div>
                 <div className="text-sm text-muted-foreground">Destinations Explored</div>
               </div>
               <Badge variant="secondary" className="ml-auto bg-green-500/20 text-green-400">+12%</Badge>
@@ -52,7 +85,7 @@ export default function DashboardPage() {
                 <Sparkles className="w-6 h-6" />
               </div>
               <div>
-                <div className="text-2xl font-bold">3</div>
+                <div className="text-2xl font-bold">{user?.user_metadata?.credits ?? 0}</div>
                 <div className="text-sm text-muted-foreground">AI Guide Credits Remaining</div>
               </div>
               <Badge variant="secondary" className="ml-auto bg-red-500/20 text-red-400">-0.5s</Badge>
@@ -137,17 +170,25 @@ export default function DashboardPage() {
             >
               <h2 className="font-display text-xl font-bold mb-4">Recent Activity</h2>
               <div className="space-y-4">
-                {history.slice(0, 5).map((place) => (
-                  <Link to={`/explore?place=${place.id}`} key={place.id} className="flex items-center gap-3 p-2 rounded-lg hover:bg-muted transition-colors cursor-pointer">
-                    <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center">
-                      <Clock className="w-4 h-4 text-muted-foreground" />
-                    </div>
-                    <div>
-                      <p className="text-sm font-medium">{place.name}</p>
-                      <p className="text-xs text-muted-foreground">Viewed</p>
-                    </div>
-                  </Link>
-                ))}
+                {history.length > 0 ? (
+                  history.slice(0, 5).map((item) => (
+                    <Link to={`/explore?place=${item.id}`} key={item.id} className="flex items-center gap-3 p-2 rounded-lg hover:bg-muted transition-colors">
+                      <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center overflow-hidden">
+                        {item.image_url ? (
+                          <img src={item.image_url} alt={item.place_name} className="w-full h-full object-cover" />
+                        ) : (
+                          <MapPin className="w-4 h-4 text-muted-foreground" />
+                        )}
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium">{item.place_name}</p>
+                        <p className="text-xs text-muted-foreground">Viewed {formatDistanceToNow(new Date(item.viewed_at), { addSuffix: true })}</p>
+                      </div>
+                    </Link>
+                  ))
+                ) : (
+                  <p className="text-muted-foreground">No recent activity.</p>
+                )}
               </div>
             </motion.div>
 
@@ -156,28 +197,35 @@ export default function DashboardPage() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.7 }}
-              className="bg-card rounded-xl shadow-elevated p-6"
+              className="bg-card rounded-xl shadow-elevated p-6 block"
             >
               <h2 className="font-display text-xl font-bold mb-4">Saved Places</h2>
               <div className="space-y-4">
-                {bookmarks.slice(0, 5).map((place) => (
-                  <Link to={`/explore?place=${place.id}`} key={place.id} className="flex items-center gap-3 p-2 rounded-lg hover:bg-muted transition-colors cursor-pointer">
-                    <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center">
-                      <MapPin className="w-4 h-4 text-muted-foreground" />
-                    </div>
-                    <div>
-                      <p className="text-sm font-medium">{place.name}</p>
-                      <p className="text-xs text-muted-foreground">Bookmarked</p>
-                    </div>
-                  </Link>
-                ))}
+                {bookmarks.length > 0 ? (
+                  bookmarks.slice(0, 5).map((place) => (
+                    <Link to={`/explore?place=${place.id}`} key={place.id} className="flex items-center gap-3 p-2 rounded-lg hover:bg-muted transition-colors" >
+                      <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center overflow-hidden">
+                        {place.imageUrl ? (
+                          <img src={place.imageUrl} alt={place.name} className="w-full h-full object-cover" />
+                        ) : (
+                          <MapPin className="w-4 h-4 text-muted-foreground" />
+                        )}
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium">{place.name}</p>
+                        <p className="text-xs text-muted-foreground">Bookmarked</p>
+                      </div>
+                    </Link>
+                  ))
+                ) : (
+                  <p className="text-muted-foreground">No saved places.</p>
+                )}
               </div>
             </motion.div>
           </div>
         </div>
       </main>
-
-      <Footer />
+        <Footer />
       </div>
     </div>
   );
