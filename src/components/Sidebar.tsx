@@ -111,15 +111,21 @@ export default function Sidebar() {
           <div className="flex items-center gap-3 mb-2">
             <Sparkles className="w-5 h-5 text-primary" />
             <div>
-              <p className="text-sm font-medium text-sidebar-foreground">Free Plan</p>
-              <p className="text-xs text-muted-foreground">7 credits left</p>
+              <p className="text-sm font-medium text-sidebar-foreground">
+                {user?.user_metadata?.plan_type === "paid" ? "Pro Plan" : "Free Plan"}
+              </p>
+              <p className="text-xs text-muted-foreground">
+                {user?.user_metadata?.credits ?? 0} credits left
+              </p>
             </div>
           </div>
-          <Link to="/pricing">
-            <Button size="sm" className="w-full bg-hero-gradient text-primary-foreground hover:opacity-90">
-              Upgrade to Pro
-            </Button>
-          </Link>
+          {user?.user_metadata?.plan_type !== "paid" && (
+            <Link to="/pricing">
+              <Button size="sm" className="w-full bg-hero-gradient text-primary-foreground hover:opacity-90">
+                Upgrade to Pro
+              </Button>
+            </Link>
+          )}
         </div>
 
         {/* User Info */}

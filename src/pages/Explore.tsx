@@ -15,6 +15,7 @@ import { useBookmarks } from "@/hooks/use-bookmarks";
 import { toast } from "sonner";
 import { isUUID } from "@/lib/utils"; // Import isUUID utility
 import { supabase } from "@/lib/supabase"; // Import supabase client
+import { useAuth } from "@/contexts/AuthContext";
 
 const categories = ["All", "Beach", "Culture", "Adventure"];
 
@@ -24,6 +25,7 @@ export default function ExplorePage() {
   const navigate = useNavigate();
   const { addPlaceToHistory } = useHistory();
   const { isBookmarked, toggleBookmark } = useBookmarks();
+  const { user, fetchUserProfile } = useAuth(); // Use the useAuth hook
 
   const [places, setPlaces] = useState<Place[]>([]);
   const [loading, setLoading] = useState(true);
@@ -32,6 +34,27 @@ export default function ExplorePage() {
   const [activeCategory, setActiveCategory] = useState("All");
   const [singlePlaceNotFound, setSinglePlaceNotFound] = useState(false); // New state for handling single place not found
   const lastAddedPlaceId = useRef<string | null>(null);
+  const lastQuery = useRef<string | null>(null); // To track the last successfully processed query
+
+  const processSuccessfulSearch = async (foundPlace: Place) => {
+    if (user) {
+      const currentCredits = user.user_metadata?.credits || 0;
+      if (currentCredits > 0) {
+        const { error } = await supabase
+          .from("profiles")
+          .update({ credits: currentCredits - 1 })
+          .eq("id", user.id);
+
+        if (error) {
+          console.error("Error decrementing credits:", error.message);
+          toast.error("Failed to decrement credits.");
+        } else {
+          await fetchUserProfile(); // Refresh user profile to show updated credits
+        }
+      }
+    }
+    addPlaceToHistory(query, foundPlace);
+  };
 
   useEffect(() => {
     (async () => {
@@ -50,6 +73,12 @@ export default function ExplorePage() {
         // If there's a search query, fetch places based on the query
         const result = await fetchPlaces({ query: query });
         fetchedPlaces = result.data;
+
+        // Only process if the query is new and yielded results
+        if (fetchedPlaces.length === 1 && query !== lastQuery.current) {
+          await processSuccessfulSearch(fetchedPlaces[0]);
+          lastQuery.current = query; // Mark this query as processed
+        }
       }
 
       setPlaces(fetchedPlaces);
@@ -58,13 +87,25 @@ export default function ExplorePage() {
       // Add to history only if a new search was performed (query is present and no selectedPlaceId)
       if (query && !selectedPlaceId && fetchedPlaces.length === 1) {
         const foundPlace = fetchedPlaces[0];
-        addPlaceToHistory(query, foundPlace);
+        // This part is now handled by processSuccessfulSearch, but keeping for clarity if other conditions apply
+        // addPlaceToHistory(query, foundPlace);
       }
     })();
-  }, [query, selectedPlaceId, addPlaceToHistory, navigate]);
+  }, [query, selectedPlaceId, addPlaceToHistory, navigate]); // Removed user, fetchUserProfile from dependencies
 
   const handleSearch = async () => {
     if (searchInput.trim()) {
+      if (user) {
+        const currentCredits = user.user_metadata?.credits || 0;
+        if (currentCredits <= 0) {
+          toast.error("You have no credits left. Please upgrade to Pro or wait for credits to reset.");
+          return;
+        }
+      } else {
+        // For unauthenticated users, allow search but maybe limit results or prompt login
+        toast.info("Sign in to track your credits and unlock more features!");
+      }
+
       setLoading(true); // Start loading
       navigate("/explore"); // Always navigate to base explore URL
       setQuery(searchInput.trim()); // Set query to trigger useEffect

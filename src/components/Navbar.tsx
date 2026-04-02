@@ -3,6 +3,7 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { Globe, Menu, X, User, Sparkles, Check, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { useRazorpayPayment } from "@/hooks/use-razorpay-payment";
 import { PaymentSuccessDialog } from "@/components/PaymentSuccessDialog";
 import { useAuth } from "@/contexts/AuthContext";
@@ -113,9 +114,15 @@ export default function Navbar() {
               </Button>
             </Link>
           )}
-          <Button size="sm" className="bg-hero-gradient text-primary-foreground gap-2 hover:opacity-90" onClick={handlePremiumClick}>
+          {user?.user_metadata?.plan_type === "paid" ? (
+            <Badge variant="secondary" className="bg-green-500/20 text-green-400 gap-2">
+              <Sparkles className="w-4 h-4" /> Pro Member
+            </Badge>
+          ) : (
+            <Button size="sm" className="bg-hero-gradient text-primary-foreground gap-2 hover:opacity-90" onClick={handlePremiumClick}>
               <Sparkles className="w-4 h-4" /> Get Premium
             </Button>
+          )}
         </div>
 
         {/* Mobile toggle */}
@@ -160,9 +167,15 @@ export default function Navbar() {
                   </Button>
                 </Link>
               )}
-              <Button className="w-full bg-hero-gradient text-primary-foreground gap-2" onClick={() => { setOpen(false); handlePremiumClick(); }}>
+              {user?.user_metadata?.plan_type === "paid" ? (
+                <Badge variant="secondary" className="w-full justify-center bg-green-500/20 text-green-400 gap-2 py-3">
+                  <Sparkles className="w-4 h-4" /> Pro Member
+                </Badge>
+              ) : (
+                <Button className="w-full bg-hero-gradient text-primary-foreground gap-2" onClick={() => { setOpen(false); handlePremiumClick(); }}>
                   <Sparkles className="w-4 h-4" /> Get Premium
                 </Button>
+              )}
             </div>
           </motion.div>
         )}

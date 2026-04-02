@@ -10,10 +10,12 @@ import { useBookmarks } from "@/hooks/use-bookmarks";
 import Sidebar from "@/components/Sidebar";
 import PlaceCard from "@/components/PlaceCard"; // Import PlaceCard
 import { formatDistanceToNow } from "date-fns"; // Import formatDistanceToNow
+import { useAuth } from "@/contexts/AuthContext";
 
 export default function DashboardPage() {
   const { history } = useHistory();
   const { bookmarks } = useBookmarks();
+  const { user } = useAuth();
   return (
     <div className="min-h-screen flex">
       <Sidebar />
@@ -54,7 +56,7 @@ export default function DashboardPage() {
                 <Sparkles className="w-6 h-6" />
               </div>
               <div>
-                <div className="text-2xl font-bold">3</div>
+                <div className="text-2xl font-bold">{user?.user_metadata?.credits ?? 0}</div>
                 <div className="text-sm text-muted-foreground">AI Guide Credits Remaining</div>
               </div>
               <Badge variant="secondary" className="ml-auto bg-red-500/20 text-red-400">-0.5s</Badge>
