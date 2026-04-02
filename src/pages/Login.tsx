@@ -83,11 +83,14 @@ export default function LoginPage() {
               if (isSignUp) {
                 await signUp(email, password, fullName);
                 toast.success("Account created successfully! Please check your email to verify your account.");
+                setTimeout(() => {
+                  navigate("/login"); // Redirect to login after successful signup
+                }, 1500); // Delay for 1.5 seconds to allow toast to be seen
               } else {
                 await signIn(email, password);
                 toast.success("Signed in successfully!");
+                navigate("/dashboard");
               }
-              navigate("/dashboard");
             } catch (error) {
               const message = error instanceof Error ? error.message : "An unexpected error occurred.";
               toast.error(message);

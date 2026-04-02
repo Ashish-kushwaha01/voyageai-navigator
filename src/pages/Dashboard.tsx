@@ -13,7 +13,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useState } from "react";
 
 export default function DashboardPage() {
-  const { history } = useHistory();
+  const { history, totalHistoryCount } = useHistory();
   const { bookmarks } = useBookmarks();
   const { user } = useAuth();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -24,20 +24,32 @@ export default function DashboardPage() {
 
   return (
     <div className="min-h-screen flex">
-      {/* Mobile Menu Button */}
-      <Button
-        variant="ghost"
-        size="icon"
-        className="fixed top-4 right-4 z-50 lg:hidden"
-        onClick={toggleSidebar}
-      >
-        <Menu className="w-6 h-6" />
-      </Button>
+      {/* Mobile Header */}
+      <div className="lg:hidden fixed top-0 left-0 right-0 z-50 flex items-center justify-between h-16 px-4 bg-background border-b border-border">
+        {/* Logo */}
+        <Link to="/" className="flex items-center gap-2 group">
+          <div className="w-9 h-9 rounded-lg bg-hero-gradient flex items-center justify-center">
+            <Globe className="w-5 h-5 text-primary-foreground" />
+          </div>
+          <span className="font-display font-bold text-xl text-foreground">
+            Voyage<span className="text-gradient">AI</span>
+          </span>
+        </Link>
+
+        {/* Mobile Menu Button */}
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={toggleSidebar}
+        >
+          <Menu className="w-6 h-6" />
+        </Button>
+      </div>
 
       <Sidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
 
       <div className="flex flex-col flex-1 lg:ml-64">
-        <main className="flex-1 pt-24 pb-16 overflow-y-auto">
+        <main className="flex-1 pt-20 pb-16 overflow-y-auto">
         <div className="container mx-auto px-4">
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
             <h1 className="font-display text-3xl md:text-4xl font-bold mb-8">Dashboard</h1>
@@ -56,7 +68,7 @@ export default function DashboardPage() {
                 <Globe className="w-6 h-6" />
               </div>
               <div>
-                <div className="text-2xl font-bold">{history.length}</div>
+                <div className="text-2xl font-bold">{totalHistoryCount}</div>
                 <div className="text-sm text-muted-foreground">Destinations Explored</div>
               </div>
               <Badge variant="secondary" className="ml-auto bg-green-500/20 text-green-400">+12%</Badge>
@@ -185,7 +197,7 @@ export default function DashboardPage() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.7 }}
-              className="bg-card rounded-xl shadow-elevated p-6"
+              className="bg-card rounded-xl shadow-elevated p-6 block"
             >
               <h2 className="font-display text-xl font-bold mb-4">Saved Places</h2>
               <div className="space-y-4">

@@ -28,8 +28,27 @@ export type HistoryItem = {
 export function useHistory() {
   const { user } = useAuth();
   const [history, setHistory] = useState<HistoryItem[]>([]);
+  const [totalHistoryCount, setTotalHistoryCount] = useState(0); // New state for total count
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  const fetchTotalHistoryCount = useCallback(async () => {
+    if (!user) {
+      setTotalHistoryCount(0);
+      return;
+    }
+    try {
+      const { count, error } = await getSupabase()
+        .from("history")
+        .select("*", { count: "exact" })
+        .eq("user_id", user.id);
+
+      if (error) throw error;
+      setTotalHistoryCount(count || 0);
+    } catch (err) {
+      console.error("Error fetching total history count:", err);
+    }
+  }, [user]);
 
   const fetchHistory = useCallback(async () => {
     if (!user) {
@@ -60,7 +79,8 @@ export function useHistory() {
 
   useEffect(() => {
     fetchHistory();
-  }, [fetchHistory]);
+    fetchTotalHistoryCount(); // Fetch total count when user changes
+  }, [fetchHistory, fetchTotalHistoryCount]);
 
   // Modified addPlaceToHistory to accept search_query and a Place object
   const addPlaceToHistory = useCallback(async (searchQuery: string, place: Place) => {
@@ -181,5 +201,5 @@ export function useHistory() {
     }
   }, [user, fetchHistory]);
 
-  return { history, addPlaceToHistory, updateHistoryBookmarkStatus, deleteHistoryItem, loading, error };
+  return { history, addPlaceToHistory, updateHistoryBookmarkStatus, deleteHistoryItem, loading, error, totalHistoryCount };
 }

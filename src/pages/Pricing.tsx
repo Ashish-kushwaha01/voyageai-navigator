@@ -168,17 +168,96 @@ export default function PricingPage() {
 
                 <Button
                   size="lg"
-                  className={`mt-8 w-full ${
-                    plan.buttonVariant === "premium"
-                      ? "bg-primary-foreground text-primary hover:bg-primary-foreground/90"
-                      : plan.buttonText === "Coming Soon"
-                      ? "opacity-60 pointer-events-none"
-                      : "bg-hero-gradient text-primary-foreground hover:opacity-90"
-                  }`}
-                  onClick={() => plan.buttonText === "Upgrade Now" && handleUpgradeClick(plan.name, plan.amount)}
-                  disabled={plan.disabled}
+                  className={(() => {
+                    const userPlanType = user?.user_metadata?.plan_type;
+                    let classes = `mt-8 w-full `;
+                    let currentButtonDisabled = plan.disabled;
+
+                    if (plan.name === "Free") {
+                      if (userPlanType === "free") {
+                        currentButtonDisabled = true;
+                        classes += "bg-hero-gradient text-primary-foreground opacity-80 cursor-default";
+                      } else if (userPlanType === "paid") {
+                        currentButtonDisabled = true;
+                        classes += "bg-hero-gradient text-primary-foreground opacity-60 pointer-events-none";
+                      } else { // Not logged in
+                        currentButtonDisabled = true;
+                        classes += "bg-hero-gradient text-primary-foreground opacity-80 cursor-default";
+                      }
+                    } else if (plan.name === "Premium") {
+                      if (userPlanType === "free") {
+                        currentButtonDisabled = false;
+                        classes += "bg-primary-foreground text-primary hover:bg-primary-foreground/90";
+                      } else if (userPlanType === "paid") {
+                        currentButtonDisabled = true;
+                        classes += "bg-primary-foreground text-primary opacity-80 cursor-default";
+                      } else { // Not logged in
+                        currentButtonDisabled = false;
+                        classes += "bg-primary-foreground text-primary hover:bg-primary-foreground/90";
+                      }
+                    } else if (plan.name === "Team") {
+                      currentButtonDisabled = true;
+                      classes += "opacity-60 pointer-events-none bg-hero-gradient text-primary-foreground";
+                    }
+                    return classes;
+                  })()}
+                  onClick={() => {
+                    const userPlanType = user?.user_metadata?.plan_type;
+                    if (plan.name === "Premium" && userPlanType === "free") {
+                      handleUpgradeClick(plan.name, plan.amount);
+                    }
+                  }}
+                  disabled={(() => {
+                    const userPlanType = user?.user_metadata?.plan_type;
+                    let currentButtonDisabled = plan.disabled;
+
+                    if (plan.name === "Free") {
+                      if (userPlanType === "free") {
+                        currentButtonDisabled = true;
+                      } else if (userPlanType === "paid") {
+                        currentButtonDisabled = true;
+                      } else { // Not logged in
+                        currentButtonDisabled = true;
+                      }
+                    } else if (plan.name === "Premium") {
+                      if (userPlanType === "free") {
+                        currentButtonDisabled = false;
+                      } else if (userPlanType === "paid") {
+                        currentButtonDisabled = true;
+                      } else { // Not logged in
+                        currentButtonDisabled = false;
+                      }
+                    } else if (plan.name === "Team") {
+                      currentButtonDisabled = true;
+                    }
+                    return currentButtonDisabled;
+                  })()}
                 >
-                  {plan.buttonText}
+                  {(() => {
+                    const userPlanType = user?.user_metadata?.plan_type;
+                    let buttonText = plan.buttonText;
+
+                    if (plan.name === "Free") {
+                      if (userPlanType === "free") {
+                        buttonText = "Current Plan";
+                      } else if (userPlanType === "paid") {
+                        buttonText = "Free Plan";
+                      } else { // Not logged in
+                        buttonText = "Current Plan";
+                      }
+                    } else if (plan.name === "Premium") {
+                      if (userPlanType === "free") {
+                        buttonText = "Upgrade Now";
+                      } else if (userPlanType === "paid") {
+                        buttonText = "Current Plan";
+                      } else { // Not logged in
+                        buttonText = "Upgrade Now";
+                      }
+                    } else if (plan.name === "Team") {
+                      buttonText = "Coming Soon";
+                    }
+                    return buttonText;
+                  })()}
                 </Button>
               </motion.div>
             ))}
