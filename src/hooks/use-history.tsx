@@ -46,7 +46,7 @@ export function useHistory() {
       if (error) throw error;
       setTotalHistoryCount(count || 0);
     } catch (err) {
-      console.error("Error fetching total history count:", err);
+
     }
   }, [user]);
 
@@ -70,8 +70,7 @@ export function useHistory() {
       if (error) throw error;
       setHistory(data || []);
     } catch (err) {
-      console.error("Error fetching history:", err);
-      setError(err instanceof Error ? err.message : "Failed to fetch history.");
+
     } finally {
       setLoading(false);
     }
@@ -85,10 +84,8 @@ export function useHistory() {
   // Modified addPlaceToHistory to accept search_query and a Place object
   const addPlaceToHistory = useCallback(async (searchQuery: string, place: Place) => {
     if (!user) {
-      console.warn("Attempted to add history for unauthenticated user.");
       return;
     }
-
     try {
       const newHistoryItem = {
         id: uuidv4(), // Generate a new UUID for the history record
@@ -118,7 +115,6 @@ export function useHistory() {
 
       if (error) {
         if (error.code === 'PGRST204' || error.message.includes('bookmarked')) {
-          console.warn("Retrying history insertion without 'bookmarked' column due to schema mismatch.");
           const { bookmarked, ...itemWithoutBookmarked } = newHistoryItem;
           const { data: retryData, error: retryError } = await getSupabase()
             .from("history")
@@ -141,7 +137,6 @@ export function useHistory() {
         return updatedHistory.slice(0, 10);
       });
     } catch (err) {
-      console.error("Error adding place to history:", err);
       setError(err instanceof Error ? err.message : "Failed to add place to history.");
     }
   }, [user]);
@@ -166,13 +161,12 @@ export function useHistory() {
 
       if (error) {
         if (error.code === 'PGRST204' || error.message.includes('bookmarked')) {
-          console.warn("History table missing 'bookmarked' column, skipping DB update.");
           return;
         }
         throw error;
       }
     } catch (err) {
-      console.error("Error updating history bookmark status:", err);
+      setError(err instanceof Error ? err.message : "Failed to update history bookmark status.");
     }
   }, [user]);
 
@@ -196,7 +190,6 @@ export function useHistory() {
         throw error;
       }
     } catch (err) {
-      console.error("Error deleting history item:", err);
       setError(err instanceof Error ? err.message : "Failed to delete history item.");
     }
   }, [user, fetchHistory]);

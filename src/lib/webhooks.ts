@@ -41,9 +41,7 @@ async function callWebhook<T>(
       const data = await res.json();
       return { data: data as T, isMock: false };
     } catch (err) {
-      console.warn(`Webhook ${path} attempt ${attempt + 1} failed:`, err);
       if (attempt === retries) {
-        console.info("Returning fallback mock data");
         return { data: fallback, isMock: true };
       }
     }
@@ -119,10 +117,7 @@ export async function fetchPlaces(options: { query?: string; placeId?: string })
     let data: LocationSearchResponse | LocationSearchResponse[];
     try {
       data = JSON.parse(responseText);
-      console.log("Webhook raw parsed data for placeId/query:", data); // DEBUG LOG
     } catch (jsonError) {
-      console.error("Failed to parse JSON response from webhook:", jsonError);
-      console.error("Raw response text:", responseText);
       return { data: [], isMock: true };
     }
 
@@ -159,7 +154,6 @@ export async function fetchPlaces(options: { query?: string; placeId?: string })
 
     return { data: placesData, isMock: false };
   } catch (error) {
-    console.error("Error calling webhook:", error);
     return { data: [], isMock: true };
   }
 }

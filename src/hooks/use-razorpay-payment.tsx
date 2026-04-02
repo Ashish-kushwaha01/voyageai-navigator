@@ -52,15 +52,13 @@ export function useRazorpayPayment() {
 
   const openPaymentGateway = (options: Omit<RazorpayOptions, "key">) => {
     if (!scriptLoaded || loading || error) {
-      console.error("Razorpay SDK not loaded yet or encountered an error.");
       return;
     }
 
     const key = import.meta.env.VITE_RAZORPAY_KEY_ID;
     if (!key) {
-      console.error("Razorpay Key ID is not defined in environment variables.");
       setError("Payment gateway not configured.");
-      return;
+      throw new Error("Razorpay Key ID is not defined in environment variables.");
     }
 
     const paymentOptions: RazorpayOptions = {
@@ -68,7 +66,6 @@ export function useRazorpayPayment() {
       ...options,
       handler: (response: { razorpay_payment_id: string }) => {
         // Handle success or failure here
-        console.log("Payment response:", response);
         options.handler(response); // Call the provided handler
       },
       prefill: options.prefill || {

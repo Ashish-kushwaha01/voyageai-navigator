@@ -38,7 +38,7 @@ export function AuthProvider({ children }: PropsWithChildren) {
   const [initError, setInitError] = useState<string | null>(null);
 
   const fetchUserProfile = async (userId: string) => {
-    console.log("AuthContext: fetchUserProfile started for userId:", userId);
+
     const { data, error } = await getSupabase()
       .from('profiles')
       .select('*')
@@ -46,16 +46,15 @@ export function AuthProvider({ children }: PropsWithChildren) {
       .single();
 
     if (error) {
-      console.error('AuthContext: Error fetching user profile:', error.message);
-      console.log("AuthContext: fetchUserProfile finished with error.");
+
       return null;
     }
-    console.log("AuthContext: fetchUserProfile finished successfully.");
+
     return data;
   };
 
+
   useEffect(() => {
-    console.log("AuthContext: useEffect started.");
     let mounted = true;
     let supabase: ReturnType<typeof getSupabase>;
     try {
@@ -64,19 +63,15 @@ export function AuthProvider({ children }: PropsWithChildren) {
       const message = error instanceof Error ? error.message : "Failed to initialize Supabase.";
       setInitError(message);
       setIsLoading(false);
-      console.error("AuthContext: Supabase initialization error:", message);
       return;
     }
 
     const processSession = async (currentSession: Session | null) => {
-      console.log("AuthContext: processSession started with session:", currentSession ? "present" : "null");
       if (!mounted) {
-        console.log("AuthContext: processSession aborted, component unmounted.");
         return;
       }
 
       if (currentSession?.user) {
-        console.log("AuthContext: Session user found, fetching profile.");
         const profile = await fetchUserProfile(currentSession.user.id);
         if (profile) {
           const updatedUser = {
@@ -87,37 +82,25 @@ export function AuthProvider({ children }: PropsWithChildren) {
             },
           };
           currentSession = { ...currentSession, user: updatedUser };
-          console.log("AuthContext: Profile merged into session user_metadata and new session object created.");
-        } else {
-          console.log("AuthContext: No profile found or error fetching profile.");
         }
-      } else {
-        console.log("AuthContext: No session user, skipping profile fetch.");
       }
       setSession(currentSession);
       setIsLoading(false);
-      console.log("AuthContext: processSession finished, isLoading set to false.");
     };
 
-    console.log("AuthContext: Calling supabase.auth.getSession().");
     supabase.auth.getSession().then(({ data, error }) => {
-      console.log("AuthContext: supabase.auth.getSession() returned.");
       if (error) {
-        console.error("AuthContext: Error getting session:", error.message);
         processSession(null);
       } else {
         processSession(data.session);
       }
     });
 
-    console.log("AuthContext: Setting up onAuthStateChange listener.");
     const { data: authListener } = supabase.auth.onAuthStateChange((_event, nextSession) => {
-      console.log("AuthContext: onAuthStateChange triggered with event:", _event, "nextSession:", nextSession ? "present" : "null");
       processSession(nextSession);
     });
 
     return () => {
-      console.log("AuthContext: useEffect cleanup.");
       mounted = false;
       authListener.subscription.unsubscribe();
     };
@@ -131,11 +114,7 @@ export function AuthProvider({ children }: PropsWithChildren) {
         { onConflict: 'id' }
       );
 
-    if (error) {
-      console.error('Error creating/updating user profile:', error.message);
-    } else {
-      console.log('User profile created/updated for:', user.id);
-    }
+
   };
 
   const value = useMemo<AuthContextValue>(
