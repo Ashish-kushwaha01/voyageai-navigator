@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { useSearchParams, useNavigate } from "react-router-dom";
+import { useSearchParams, useNavigate, Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Search, Filter, MapPin } from "lucide-react";
 import { Input } from "@/components/ui/input";
@@ -16,6 +16,7 @@ import { toast } from "sonner";
 import { isUUID } from "@/lib/utils"; // Import isUUID utility
 import { supabase } from "@/lib/supabase"; // Import supabase client
 import { useAuth } from "@/contexts/AuthContext";
+import { useGuestCredits } from "@/hooks/useGuestCredits";
 
 const categories = ["All", "Beach", "Culture", "Adventure"];
 
@@ -26,6 +27,7 @@ export default function ExplorePage() {
   const { addPlaceToHistory } = useHistory();
   const { isBookmarked, toggleBookmark } = useBookmarks();
   const { user, fetchUserProfile } = useAuth(); // Use the useAuth hook
+  const { credits: guestCredits, decrementCredits: decrementGuestCredits, hasCredits: hasGuestCredits } = useGuestCredits();
 
   const [places, setPlaces] = useState<Place[]>([]);
   const [loading, setLoading] = useState(true);
@@ -52,6 +54,9 @@ export default function ExplorePage() {
           await fetchUserProfile(); // Refresh user profile to show updated credits
         }
       }
+    } else {
+      // Decrement guest credits
+      decrementGuestCredits();
     }
     addPlaceToHistory(query, foundPlace);
   };
@@ -102,8 +107,11 @@ export default function ExplorePage() {
           return;
         }
       } else {
-        // For unauthenticated users, allow search but maybe limit results or prompt login
-        toast.info("Sign in to track your credits and unlock more features!");
+        // Guest user credit check
+        if (!hasGuestCredits) {
+          toast.error("You have no guest credits left. Please sign in or sign up for more features!");
+          return;
+        }
       }
 
       setLoading(true); // Start loading
@@ -293,6 +301,23 @@ export default function ExplorePage() {
               ))}
             </div>
           </div>
+
+          {!user && (
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="mb-8 p-4 bg-card rounded-lg shadow-elevated flex items-center justify-between"
+            >
+              <p className="text-sm text-muted-foreground">
+                You have {guestCredits} guest credits left.
+              </p>
+              {!hasGuestCredits && (
+                <Link to="/login">
+                  <Button size="sm">Sign In / Sign Up</Button>
+                </Link>
+              )}
+            </motion.div>
+          )}
 
           {renderContent()}
         </div>
