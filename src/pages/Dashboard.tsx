@@ -1,8 +1,7 @@
 import { motion } from "framer-motion";
-import { User, MapPin, Clock, Star, CreditCard, BookmarkPlus, LogOut, Globe, Sparkles, Compass, History, Upload, Key, Settings, TrendingUp, TrendingDown, Timer } from "lucide-react";
+import { User, MapPin, Clock, Star, CreditCard, BookmarkPlus, LogOut, Globe, Sparkles, Compass, History, Upload, Key, Settings, TrendingUp, TrendingDown, Timer, Menu } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { Link } from "react-router-dom";
 import { useHistory } from "@/hooks/use-history";
@@ -11,14 +10,32 @@ import Sidebar from "@/components/Sidebar";
 import PlaceCard from "@/components/PlaceCard"; // Import PlaceCard
 import { formatDistanceToNow } from "date-fns"; // Import formatDistanceToNow
 import { useAuth } from "@/contexts/AuthContext";
+import { useState } from "react";
 
 export default function DashboardPage() {
   const { history } = useHistory();
   const { bookmarks } = useBookmarks();
   const { user } = useAuth();
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+
+  const toggleSidebar = () => {
+    setIsSidebarOpen(!isSidebarOpen);
+  };
+
   return (
     <div className="min-h-screen flex">
-      <Sidebar />
+      {/* Mobile Menu Button */}
+      <Button
+        variant="ghost"
+        size="icon"
+        className="fixed top-4 right-4 z-50 lg:hidden"
+        onClick={toggleSidebar}
+      >
+        <Menu className="w-6 h-6" />
+      </Button>
+
+      <Sidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
+
       <div className="flex flex-col flex-1 lg:ml-64">
         <main className="flex-1 pt-24 pb-16 overflow-y-auto">
         <div className="container mx-auto px-4">
@@ -196,8 +213,7 @@ export default function DashboardPage() {
           </div>
         </div>
       </main>
-
-      <Footer />
+        <Footer />
       </div>
     </div>
   );

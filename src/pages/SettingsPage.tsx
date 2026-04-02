@@ -114,6 +114,7 @@ export default function SettingsPage() {
     <div className="min-h-screen flex">
       <Sidebar />
       <div className="flex flex-col flex-1 lg:ml-64">
+        <Navbar />
         <main className="flex-1 pt-24 pb-16 overflow-y-auto">
           <div className="container mx-auto px-4">
             <h1 className="font-display text-3xl md:text-4xl font-bold mb-8">Settings</h1>

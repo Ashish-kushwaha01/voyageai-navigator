@@ -12,10 +12,10 @@ export default function HistoryPage() {
   const { history, deleteHistoryItem } = useHistory();
 
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-screen">
       <Navbar />
 
-      <main className="pt-24 pb-16 flex-1 overflow-y-auto">
+      <main className="pt-16 flex-1 overflow-y-auto">
         <div className="container mx-auto px-4">
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="mb-8">
             <h1 className="font-display text-3xl md:text-4xl font-bold">

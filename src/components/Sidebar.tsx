@@ -13,6 +13,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
@@ -50,7 +51,7 @@ const sidebarNavItems = [
   },
 ];
 
-export default function Sidebar() {
+export default function Sidebar({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
   const location = useLocation();
   const navigate = useNavigate();
   const { user, signOut } = useAuth();
@@ -69,12 +70,12 @@ export default function Sidebar() {
     }
   };
 
-  return (
+  const sidebarContent = (
     <motion.aside
       initial={{ x: -200 }}
       animate={{ x: 0 }}
       transition={{ duration: 0.3 }}
-      className="fixed inset-y-0 left-0 z-40 hidden w-64 flex-col border-r bg-sidebar p-4 lg:flex"
+      className="fixed inset-y-0 left-0 z-40 w-64 flex-col border-r bg-sidebar p-4 flex"
     >
       <div className="flex items-center justify-center h-16 px-4">
         <Link to="/" className="flex items-center gap-2 group">
@@ -89,7 +90,7 @@ export default function Sidebar() {
 
       <nav className="flex-1 space-y-2 py-4">
         {sidebarNavItems.map((item) => (
-          <Link key={item.href} to={item.href}>
+          <Link key={item.href} to={item.href} onClick={onClose}>
             <Button
               variant="ghost"
               className={`w-full justify-start gap-3 ${
@@ -120,7 +121,7 @@ export default function Sidebar() {
             </div>
           </div>
           {user?.user_metadata?.plan_type !== "paid" && (
-            <Link to="/pricing">
+            <Link to="/pricing" onClick={onClose}>
               <Button size="sm" className="w-full bg-hero-gradient text-primary-foreground hover:opacity-90">
                 Upgrade to Pro
               </Button>
@@ -162,5 +163,21 @@ export default function Sidebar() {
         )}
       </div>
     </motion.aside>
+  );
+
+  return (
+    <>
+      {/* Desktop Sidebar */}
+      <div className="hidden lg:flex">
+        {sidebarContent}
+      </div>
+
+      {/* Mobile Sidebar */}
+      <Sheet open={isOpen} onOpenChange={onClose}>
+        <SheetContent side="left" className="p-0 w-64 border-r-0">
+          {sidebarContent}
+        </SheetContent>
+      </Sheet>
+    </>
   );
 }
