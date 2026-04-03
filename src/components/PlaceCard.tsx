@@ -3,7 +3,6 @@ import { motion } from "framer-motion";
 import { MapPin, Star, Play, Trash2 } from "lucide-react";
 import { Link } from "react-router-dom";
 import type { Place } from "@/lib/webhooks";
-import { useHistory } from "@/hooks/use-history";
 import { useBookmarks } from "@/hooks/use-bookmarks";
 import AIGuideModal from "./AIGuideModal";
 import { Button } from "./ui/button";
@@ -28,8 +27,7 @@ export default function PlaceCard({ place, index, onDelete }: { place: Place; in
   const img = place.imageUrl || placeImages[place.name] || "https://images.unsplash.com/photo-1488085061387-422e29b40080?w=600&h=400&fit=crop";
 
   const [imgSrc, setImgSrc] = useState(img);
-  const { history, updateHistoryBookmarkStatus } = useHistory();
-  const { isBookmarked, toggleBookmark } = useBookmarks(history, updateHistoryBookmarkStatus);
+  const { isBookmarked, toggleBookmark } = useBookmarks();
 
   return (
     <motion.div
