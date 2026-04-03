@@ -60,21 +60,29 @@ export function useBookmarks() {
   }, [fetchBookmarks]);
 
   const isBookmarked = useCallback((placeId: string) => {
-    return bookmarks.some((place) => place.place_id === placeId || place.id === placeId);
+    console.log("isBookmarked called for placeId:", placeId);
+    const result = bookmarks.some((place) => place.place_id === placeId || place.id === placeId);
+    console.log("isBookmarked result:", result);
+    return result;
   }, [bookmarks]);
 
   const toggleBookmark = useCallback(async (place: Place) => {
+    console.log("toggleBookmark called with place:", place);
     if (!user) {
+      console.log("User not logged in, cannot toggle bookmark.");
       // Optionally, show a login required dialog here
       return;
     }
 
     const currentlyBookmarked = isBookmarked(place.place_id) || isBookmarked(place.id);
+    console.log("Currently bookmarked status:", currentlyBookmarked);
     
     if (updateHistoryBookmarkStatus) {
-      await updateHistoryBookmarkStatus(place.place_id, !currentlyBookmarked);
+      console.log("Calling updateHistoryBookmarkStatus with:", place.id, !currentlyBookmarked);
+      await updateHistoryBookmarkStatus(place.id, !currentlyBookmarked); // Use place.id (history UUID)
       // After updating in history, refetch bookmarks to ensure consistency
       fetchBookmarks();
+      console.log("fetchBookmarks called after update.");
     }
   }, [user, isBookmarked, updateHistoryBookmarkStatus, fetchBookmarks]);
 
