@@ -4,8 +4,10 @@ import { MapPin, Star, Play, Trash2 } from "lucide-react";
 import { Link } from "react-router-dom";
 import type { Place } from "@/lib/webhooks";
 import { useBookmarks } from "@/hooks/use-bookmarks";
+import { useAuth } from "@/contexts/AuthContext";
 import AIGuideModal from "./AIGuideModal";
 import { Button } from "./ui/button";
+import { toast } from "sonner";
 
 const categoryColors: Record<string, string> = {
   Beach: "bg-ocean/10 text-ocean",
@@ -27,7 +29,23 @@ export default function PlaceCard({ place, index, onDelete }: { place: Place; in
   const img = place.imageUrl || placeImages[place.name] || "https://images.unsplash.com/photo-1488085061387-422e29b40080?w=600&h=400&fit=crop";
 
   const [imgSrc, setImgSrc] = useState(img);
+  const [localBookmarked, setLocalBookmarked] = useState<boolean | null>(null);
   const { isBookmarked, toggleBookmark } = useBookmarks();
+  const { user } = useAuth();
+
+  const showBookmarked = localBookmarked !== null ? localBookmarked : isBookmarked(place.id);
+
+  const handleBookmarkClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!user) {
+      toast.error("Please sign in to bookmark places.");
+      return;
+    }
+    const newState = !showBookmarked;
+    setLocalBookmarked(newState);
+    toggleBookmark(place);
+  };
 
   return (
     <motion.div
@@ -92,14 +110,10 @@ export default function PlaceCard({ place, index, onDelete }: { place: Place; in
         <AIGuideModal placeId={place.id} placeName={place.name} />
         <Button
           variant="outline"
-          onClick={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            toggleBookmark(place);
-          }}
-          className={isBookmarked(place.id) ? "bg-yellow-400 text-black" : ""}
+          onClick={handleBookmarkClick}
+          className={showBookmarked ? "bg-yellow-400 text-black" : ""}
         >
-          {isBookmarked(place.id) ? "Bookmarked" : "Bookmark"}
+          {showBookmarked ? "Bookmarked" : "Bookmark"}
         </Button>
       </div>
     </motion.div>
