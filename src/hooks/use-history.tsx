@@ -46,7 +46,7 @@ export function useHistory() {
       if (error) throw error;
       setTotalHistoryCount(count || 0);
     } catch (err) {
-
+      setError(err instanceof Error ? err.message : "Failed to fetch total history count.");
     }
   }, [user]);
 
@@ -70,7 +70,7 @@ export function useHistory() {
       if (error) throw error;
       setHistory(data || []);
     } catch (err) {
-
+      setError(err instanceof Error ? err.message : "Failed to fetch history.");
     } finally {
       setLoading(false);
     }
@@ -148,7 +148,7 @@ export function useHistory() {
       // Optimistically update local state first
       setHistory((prevHistory) =>
         prevHistory.map((item) =>
-          item.place_id === placeId ? { ...item, bookmarked: isBookmarked } : item
+          item.id === placeId ? { ...item, bookmarked: isBookmarked } : item
         )
       );
 
@@ -157,7 +157,7 @@ export function useHistory() {
         .from("history")
         .update({ bookmarked: isBookmarked })
         .eq("user_id", user.id)
-        .eq("place_id", placeId);
+        .eq("id", placeId); // Changed from place_id to id
 
       if (error) {
         if (error.code === 'PGRST204' || error.message.includes('bookmarked')) {

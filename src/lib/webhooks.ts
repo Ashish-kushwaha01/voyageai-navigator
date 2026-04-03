@@ -8,7 +8,7 @@ import { getSupabase } from './supabase'; // Import getSupabase
  * Fallback mock data is returned if webhooks fail.
  */
 
-const N8N_BASE_URL = import.meta.env.VITE_N8N_WEBHOOK_URL || "https://voyageai.app.n8n.cloud/webhook";
+const N8N_BASE_URL = import.meta.env.VITE_N8N_WEBHOOK_URL;
 
 interface WebhookOptions {
   timeout?: number;
@@ -86,76 +86,86 @@ export interface LocationSearchResponse {
   };
 }
 
+const mockPlaces: Place[] = [
+  {
+    id: uuidv4(),
+    place_id: "mock-youtube-id-1",
+    name: "Mock Place 1",
+    country: "Mock Country",
+    description: "This is a mock description for Place 1.",
+    imageUrl: "https://via.placeholder.com/150",
+    videoId: "mock-youtube-id-1",
+    rating: 4.5,
+    category: "Adventure",
+    moreInfo: "More info about Mock Place 1",
+    location: { name: "Mock Location 1", lat: 0, lng: 0 },
+  },
+  {
+    id: uuidv4(),
+    place_id: "mock-youtube-id-2",
+    name: "Mock Place 2",
+    country: "Mock Country",
+    description: "This is a mock description for Place 2.",
+    imageUrl: "https://via.placeholder.com/150",
+    videoId: "mock-youtube-id-2",
+    rating: 4.0,
+    category: "Relaxation",
+    moreInfo: "More info about Mock Place 2",
+    location: { name: "Mock Location 2", lat: 1, lng: 1 },
+  },
+];
+
 // Modify fetchPlaces to use the new search webhook when a query is present
 export async function fetchPlaces(options: { query?: string; placeId?: string }): Promise<{ data: Place[]; isMock: boolean }> {
   const { query, placeId } = options;
-  const webhookUrl = import.meta.env.VITE_N8N_WEBHOOK_URL + "/search"; // Use the existing search webhook
   let payload: Record<string, unknown>;
 
   if (placeId) {
-    // If placeId is provided, send it as 'id' to the webhook for n8n to handle the lookup
     payload = { id: placeId };
   } else if (query) {
-    // If there's a search query, send it as 'location'
     payload = { location: query };
   } else {
     return { data: [], isMock: false };
   }
 
-  try {
-    const res = await fetch(webhookUrl, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
-    });
+  const { data, isMock } = await callWebhook<LocationSearchResponse | LocationSearchResponse[]>(
+    "/search",
+    payload,
+    [], // Fallback for search webhook
+  );
 
-    if (!res.ok) {
-      throw new Error(`Webhook returned ${res.status}`);
-    }
-
-    const responseText = await res.text();
-    let data: LocationSearchResponse | LocationSearchResponse[];
-    try {
-      data = JSON.parse(responseText);
-    } catch (jsonError) {
-      return { data: [], isMock: true };
-    }
-
-    let placesData: Place[] = [];
-    if (Array.isArray(data)) {
-      placesData = data.map(item => ({
-        id: placeId && isUUID(placeId) ? placeId : uuidv4(), // Use provided placeId if it's a UUID, otherwise generate new
-        place_id: item.youtube_video_id, // Use youtube_video_id as the place_id
-        name: item.title,
-        country: item.description.split(',')[0].trim() || "Unknown Country",
-        description: item.description,
-        imageUrl: item.image,
-        videoId: item.youtube_video_id,
-        rating: 4.5,
-        category: item.category || "General",
-        moreInfo: item.more_info,
-        location: item.location,
-      }));
-    } else if (data) {
-      placesData = [{
-        id: placeId && isUUID(placeId) ? placeId : uuidv4(), // Use provided placeId if it's a UUID, otherwise generate new
-        place_id: data.youtube_video_id, // Use youtube_video_id as the place_id
-        name: data.title,
-        country: data.description.split(',')[0].trim() || "Unknown Country",
-        description: data.description,
-        imageUrl: data.image,
-        videoId: data.youtube_video_id,
-        rating: 4.5,
-        category: data.category || "General",
-        moreInfo: data.more_info,
-        location: data.location,
-      }];
-    }
-
-    return { data: placesData, isMock: false };
-  } catch (error) {
-    return { data: [], isMock: true };
+  let placesData: Place[] = [];
+  if (Array.isArray(data)) {
+    placesData = data.map(item => ({
+      id: placeId && isUUID(placeId) ? placeId : uuidv4(),
+      place_id: item.youtube_video_id,
+      name: item.title,
+      country: item.description.split(',')[0].trim() || "Unknown Country",
+      description: item.description,
+      imageUrl: item.image,
+      videoId: item.youtube_video_id,
+      rating: 4.5,
+      category: item.category || "General",
+      moreInfo: item.more_info,
+      location: item.location,
+    }));
+  } else if (data && Object.keys(data).length > 0) { // Check if data is not empty object
+    placesData = [{
+      id: placeId && isUUID(placeId) ? placeId : uuidv4(),
+      place_id: data.youtube_video_id,
+      name: data.title,
+      country: data.description.split(',')[0].trim() || "Unknown Country",
+      description: data.description,
+      imageUrl: data.image,
+      videoId: data.youtube_video_id,
+      rating: 4.5,
+      category: data.category || "General",
+      moreInfo: data.more_info,
+      location: data.location,
+    }];
   }
+
+  return { data: placesData, isMock: isMock };
 }
 
 // ── AI Guide ──

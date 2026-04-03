@@ -22,4 +22,5 @@ export default defineConfig(({ mode }) => ({
   optimizeDeps: {
     include: ["@supabase/supabase-js"],
   },
+  envDir: path.resolve(__dirname),
 }));
