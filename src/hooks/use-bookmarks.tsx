@@ -3,10 +3,12 @@ import { Place } from "@/lib/webhooks";
 import { HistoryItem, useHistory } from "@/hooks/use-history";
 import { useAuth } from "@/contexts/AuthContext";
 import { getSupabase } from "@/lib/supabase";
+import { v4 as uuidv4 } from "uuid";
+import { toast } from "sonner";
 
 export function useBookmarks() {
   const { user } = useAuth();
-  const { updateHistoryBookmarkStatus } = useHistory();
+  const { history, updateHistoryBookmarkStatus } = useHistory();
   const [bookmarks, setBookmarks] = useState<Place[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -60,31 +62,67 @@ export function useBookmarks() {
   }, [fetchBookmarks]);
 
   const isBookmarked = useCallback((placeId: string) => {
-    console.log("isBookmarked called for placeId:", placeId);
-    const result = bookmarks.some((place) => place.place_id === placeId || place.id === placeId);
-    console.log("isBookmarked result:", result);
-    return result;
+    return bookmarks.some((place) => place.place_id === placeId || place.id === placeId);
   }, [bookmarks]);
 
   const toggleBookmark = useCallback(async (place: Place) => {
-    console.log("toggleBookmark called with place:", place);
     if (!user) {
-      console.log("User not logged in, cannot toggle bookmark.");
-      // Optionally, show a login required dialog here
+      toast.error("Please sign in to bookmark places.");
       return;
     }
 
     const currentlyBookmarked = isBookmarked(place.place_id) || isBookmarked(place.id);
-    console.log("Currently bookmarked status:", currentlyBookmarked);
-    
-    if (updateHistoryBookmarkStatus) {
-      console.log("Calling updateHistoryBookmarkStatus with:", place.id, !currentlyBookmarked);
-      await updateHistoryBookmarkStatus(place.id, !currentlyBookmarked); // Use place.id (history UUID)
-      // After updating in history, refetch bookmarks to ensure consistency
+
+    const existingHistoryItem = history.find(
+      (item) => item.place_id === place.place_id || item.id === place.id
+    );
+
+    if (existingHistoryItem) {
+      await updateHistoryBookmarkStatus(existingHistoryItem.id, !currentlyBookmarked);
       fetchBookmarks();
-      console.log("fetchBookmarks called after update.");
+    } else {
+      const newHistoryItem = {
+        id: uuidv4(),
+        user_id: user.id,
+        search_query: "",
+        place_id: place.place_id,
+        place_name: place.name,
+        country: place.country,
+        description: place.description,
+        image_url: place.imageUrl,
+        video_id: place.videoId,
+        rating: place.rating,
+        category: place.category,
+        more_info: place.moreInfo,
+        location_name: place.location?.name,
+        location_lat: place.location?.lat,
+        location_lng: place.location?.lng,
+        url: `/explore?place=${place.id}`,
+        bookmarked: true,
+      };
+
+      try {
+        const { error } = await getSupabase()
+          .from("history")
+          .insert([newHistoryItem]);
+
+        if (error) {
+          const { bookmarked, ...itemWithoutBookmarked } = newHistoryItem;
+          const { error: retryError } = await getSupabase()
+            .from("history")
+            .insert([itemWithoutBookmarked]);
+          
+          if (retryError) throw retryError;
+        }
+
+        toast.success("Place bookmarked!");
+        fetchBookmarks();
+      } catch (err) {
+        toast.error("Failed to bookmark place.");
+        console.error("Bookmark error:", err);
+      }
     }
-  }, [user, isBookmarked, updateHistoryBookmarkStatus, fetchBookmarks]);
+  }, [user, isBookmarked, history, updateHistoryBookmarkStatus, fetchBookmarks]);
 
   const removeBookmark = useCallback(async (placeId: string) => {
     if (!user) return;
