@@ -134,18 +134,24 @@ export function AuthProvider({ children }: PropsWithChildren) {
       },
       async signUp(email, password, fullName) {
         setIsLoading(true);
-        const { error } = await getSupabase().auth.signUp({
+        
+        const { data, error } = await getSupabase().auth.signUp({
           email,
           password,
           options: {
             data: fullName ? { full_name: fullName } : undefined,
           },
         });
+        
         if (error) {
           setIsLoading(false);
           throw error;
         }
-        // onAuthStateChange will handle setting session and isLoading
+        
+        if (data.user && data.user.identities && data.user.identities.length === 0) {
+          setIsLoading(false);
+          throw new Error("User already exists. Please try a different email or sign in instead.");
+        }
       },
       async signInWithGoogle() {
         setIsLoading(true);
