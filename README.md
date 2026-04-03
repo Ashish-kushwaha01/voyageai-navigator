@@ -1,3 +1,3 @@
-# Welcome to your Lovable project
+# VoyageAI - AI-Powered Travel Discovery
 
-TODO: Document your project here
+Discover 10,000+ destinations with AI-powered insights and smart trip planning.
