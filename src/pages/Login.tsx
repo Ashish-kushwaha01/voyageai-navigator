@@ -84,8 +84,8 @@ export default function LoginPage() {
                 await signUp(email, password, fullName);
                 toast.success("Account created successfully! Please check your email to verify your account.");
                 setTimeout(() => {
-                  navigate("/login"); // Redirect to login after successful signup
-                }, 1500); // Delay for 1.5 seconds to allow toast to be seen
+                  navigate("/login");
+                }, 1500);
               } else {
                 await signIn(email, password);
                 toast.success("Signed in successfully!");
@@ -93,7 +93,12 @@ export default function LoginPage() {
               }
             } catch (error) {
               const message = error instanceof Error ? error.message : "An unexpected error occurred.";
-              toast.error(message);
+              
+              if (isSignUp && (message.includes("already registered") || message.includes("already exists") || message.includes("duplicate"))) {
+                toast.error("User already exists. Please try a different email or sign in instead.");
+              } else {
+                toast.error(message);
+              }
             } finally {
               setLoading(false);
             }
