@@ -26,8 +26,10 @@ export default function ExplorePage() {
   const navigate = useNavigate();
   const { addPlaceToHistory } = useHistory();
   const { isBookmarked, toggleBookmark } = useBookmarks();
-  const { user, fetchUserProfile } = useAuth(); // Use the useAuth hook
+  const { user, fetchUserProfile } = useAuth();
   const { credits: guestCredits, decrementCredits: decrementGuestCredits, hasCredits: hasGuestCredits } = useGuestCredits();
+
+  const [localBookmarkStates, setLocalBookmarkStates] = useState<Record<string, boolean>>({});
 
   const [places, setPlaces] = useState<Place[]>([]);
   const [loading, setLoading] = useState(true);
@@ -122,6 +124,20 @@ export default function ExplorePage() {
 
   const selectedPlace = places.find((p) => p.id === selectedPlaceId);
 
+  const getBookmarkState = (placeId: string) => {
+    return localBookmarkStates[placeId] !== undefined ? localBookmarkStates[placeId] : isBookmarked(placeId);
+  };
+
+  const handleBookmarkToggle = (place: Place) => {
+    if (!user) {
+      toast.error("Please sign in to bookmark places.");
+      return;
+    }
+    const currentState = getBookmarkState(place.id);
+    setLocalBookmarkStates(prev => ({ ...prev, [place.id]: !currentState }));
+    toggleBookmark(place);
+  };
+
   // Derived state to determine which single place to display in detail
   const selectedPlaceForDisplay = selectedPlaceId
     ? selectedPlace // If URL has placeId, use that specific place
@@ -212,10 +228,10 @@ export default function ExplorePage() {
                 )}
                 <Button
                   variant="outline"
-                  onClick={() => selectedPlaceForDisplay && toggleBookmark(selectedPlaceForDisplay)}
-                  className={isBookmarked(selectedPlaceForDisplay.id) ? "bg-yellow-400 text-black" : ""}
+                  onClick={() => selectedPlaceForDisplay && handleBookmarkToggle(selectedPlaceForDisplay)}
+                  className={getBookmarkState(selectedPlaceForDisplay.id) ? "bg-yellow-400 text-black" : ""}
                 >
-                  {isBookmarked(selectedPlaceForDisplay.id) ? "Bookmarked" : "Bookmark"}
+                  {getBookmarkState(selectedPlaceForDisplay.id) ? "Bookmarked" : "Bookmark"}
                 </Button>
               </div>
             </div>
