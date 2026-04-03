@@ -68,7 +68,6 @@ export default function PlaceCard({ place, index, onDelete }: { place: Place; in
             loading="lazy"
             onError={() => setImgSrc("https://images.unsplash.com/photo-1488085061387-422e29b40080?w=600&h=400&fit=crop")}
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-foreground/60 to-transparent" />
           <div className="absolute top-3 left-3">
             <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${categoryColors[place.category] || "bg-muted text-muted-foreground"}`}>
               {place.category}
