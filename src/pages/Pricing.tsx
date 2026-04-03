@@ -202,10 +202,7 @@ export default function PricingPage() {
                     return classes;
                   })()}
                   onClick={() => {
-                    const userPlanType = user?.user_metadata?.plan_type;
-                    if (plan.name === "Premium" && userPlanType === "free") {
-                      handleUpgradeClick(plan.name, plan.amount);
-                    }
+                    handleUpgradeClick(plan.name, plan.amount);
                   }}
                   disabled={(() => {
                     const userPlanType = user?.user_metadata?.plan_type;
