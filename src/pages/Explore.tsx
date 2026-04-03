@@ -211,7 +211,7 @@ export default function ExplorePage() {
                   {selectedPlaceForDisplay.moreInfo}
                 </p>
               )}
-              <div className="mt-4 flex gap-2">
+              <div className="mt-4 flex flex-wrap gap-2">
                 <AIGuideModal placeId={selectedPlaceForDisplay.id} placeName={selectedPlaceForDisplay.name} />
                 {selectedPlaceForDisplay.location && (
                   <Button
