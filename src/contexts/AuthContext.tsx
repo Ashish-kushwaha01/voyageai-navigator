@@ -134,16 +134,20 @@ export function AuthProvider({ children }: PropsWithChildren) {
       },
       async signUp(email, password, fullName) {
         setIsLoading(true);
-        const { error } = await getSupabase().auth.signUp({
+        const { data, error } = await getSupabase().auth.signUp({
           email,
           password,
           options: {
             data: fullName ? { full_name: fullName } : undefined,
+            emailRedirectTo: `${window.location.origin}/login`, // Redirect to login after email verification
           },
         });
         if (error) {
           setIsLoading(false);
           throw error;
+        }
+        if (data.user) {
+          await createOrUpdateUserProfile(data.user); // Create user profile after successful signup
         }
         // onAuthStateChange will handle setting session and isLoading
       },
